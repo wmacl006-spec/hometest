@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>William MacLean</title>
+  <title>William MacLean | Resume</title>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Comfortaa:wght@500;600;700&display=swap" rel="stylesheet">
@@ -22,8 +22,6 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      font-size: 15.5px;
-      letter-spacing: 0.15px;
       background: radial-gradient(circle at top, #1b1b1b, var(--black));
       color: var(--white);
       line-height: 1.65;
@@ -44,19 +42,16 @@
 
     aside h1 {
       font-family: 'Comfortaa', sans-serif;
-      font-size: 2.3rem;
+      font-size: 2rem;
       font-weight: 700;
-      line-height: 1.2;
-      letter-spacing: 0.8px;
-      margin-bottom: 2.2rem;
+      margin-bottom: 2rem;
     }
 
     .sidebar-section { margin-bottom: 2.4rem; }
 
     .sidebar-section h3 {
       font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px;
       text-transform: uppercase;
       color: var(--pink);
       margin-bottom: 0.75rem;
@@ -64,25 +59,20 @@
 
     .sidebar-section p {
       font-size: 0.9rem;
-      font-weight: 400;
-      letter-spacing: 0.2px;
       color: #e0e0e0;
       margin-bottom: 0.4rem;
     }
 
-    /* MAIN (CENTERED) */
+    /* MAIN */
     main {
       padding: 4rem 3.5rem;
       max-width: 1100px;
-      margin: 0 auto;
     }
 
     section { margin-bottom: 4rem; }
 
     section h3 {
       font-size: 1.5rem;
-      font-weight: 600;
-      letter-spacing: 0.6px;
       margin-bottom: 2rem;
       color: var(--pink);
       border-left: 4px solid var(--pink);
@@ -103,35 +93,39 @@
       margin-bottom: 0.75rem;
     }
 
-    .role-header h4 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      letter-spacing: 0.25px;
-    }
+    .role-header h4 { font-size: 1.1rem; font-weight: 600; }
+    .role-header span { font-size: 0.9rem; color: var(--gray); }
 
-    .role-header span {
-      font-size: 0.9rem;
-      color: var(--gray);
-    }
-
-    .role p {
-      font-size: 0.95rem;
-      font-weight: 400;
-      letter-spacing: 0.2px;
-      color: #e0e0e0;
-    }
+    .role p { font-size: 0.95rem; color: #e0e0e0; }
 
     /* RIGHT CONTACT COLUMN */
     .contact-column {
-      padding: 4rem 3rem;
+      padding: 3rem 3rem 4rem;
       border-left: 1px solid #222;
       background: #111;
     }
 
+    .home-button {
+      display: block;
+      width: 100%;
+      margin-bottom: 2.5rem;
+      padding: 0.85rem;
+      text-align: center;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      color: var(--white);
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .home-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(176, 11, 85, 0.25);
+    }
+
     .contact-column h3 {
       font-size: 1.3rem;
-      font-weight: 600;
-      letter-spacing: 0.6px;
       color: var(--pink);
       margin-bottom: 1.5rem;
     }
@@ -143,7 +137,6 @@
     }
 
     input, textarea {
-      font-family: 'Inter', sans-serif;
       padding: 0.9rem;
       border-radius: 6px;
       border: none;
@@ -153,7 +146,6 @@
     }
 
     button {
-      font-family: 'Inter', sans-serif;
       padding: 0.95rem;
       border-radius: 6px;
       border: none;
@@ -180,6 +172,7 @@
 
 <div class="layout">
 
+  <!-- LEFT INFO -->
   <aside>
     <h1>William MacLean</h1>
 
@@ -202,13 +195,14 @@
     </div>
   </aside>
 
+  <!-- MAIN -->
   <main>
     <section>
       <h3>Professional Experience</h3>
 
       <div class="role">
         <div class="role-header">
-          <h4>IATSE Local 471</h4>
+          <h4>IATSE Local 471 — Stagehand</h4>
           <span>2025 – Present</span>
         </div>
         <p>Stagehand supporting carpentry, lighting, audio, and truck loading in the Ottawa region.</p>
@@ -216,7 +210,7 @@
 
       <div class="role">
         <div class="role-header">
-          <h4>IATSE Local 357</h4>
+          <h4>IATSE Local 357 — Stagehand</h4>
           <span>2022 – Present</span>
         </div>
         <p>Stagehand supporting carpentry, lighting, audio, pyrotechnics, and camera operations in the Kitchener–Waterloo region.</p>
@@ -252,8 +246,12 @@
     </section>
   </main>
 
+  <!-- CONTACT -->
   <div class="contact-column">
+    <a href="index.html" class="home-button">← Home</a>
+
     <h3>Contact</h3>
+
     <form id="contact-form">
       <input type="text" name="name" placeholder="Your Name" required>
       <input type="email" name="email" placeholder="Your Email" required>
