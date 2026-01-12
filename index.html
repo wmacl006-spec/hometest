@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>William MacLean</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -21,6 +22,8 @@
 
     body {
       font-family: 'Inter', sans-serif;
+      font-size: 15.5px;
+      letter-spacing: 0.15px;
       background: radial-gradient(circle at top, #1b1b1b, var(--black));
       color: var(--white);
       line-height: 1.65;
@@ -40,16 +43,21 @@
     }
 
     aside h1 {
-      font-size: 2rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 2.35rem;
       font-weight: 700;
-      margin-bottom: 2rem;
+      line-height: 1.15;
+      letter-spacing: 0.5px;
+      margin-bottom: 2.2rem;
     }
 
     .sidebar-section { margin-bottom: 2.4rem; }
 
     .sidebar-section h3 {
+      font-family: 'Inter', sans-serif;
       font-size: 0.85rem;
-      letter-spacing: 1px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
       color: var(--pink);
       margin-bottom: 0.75rem;
@@ -57,6 +65,8 @@
 
     .sidebar-section p {
       font-size: 0.9rem;
+      font-weight: 400;
+      letter-spacing: 0.2px;
       color: #e0e0e0;
       margin-bottom: 0.4rem;
     }
@@ -70,7 +80,10 @@
     section { margin-bottom: 4rem; }
 
     section h3 {
+      font-family: 'Inter', sans-serif;
       font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.6px;
       margin-bottom: 2rem;
       color: var(--pink);
       border-left: 4px solid var(--pink);
@@ -91,10 +104,24 @@
       margin-bottom: 0.75rem;
     }
 
-    .role-header h4 { font-size: 1.1rem; font-weight: 600; }
-    .role-header span { font-size: 0.9rem; color: var(--gray); }
+    .role-header h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.25px;
+    }
 
-    .role p { font-size: 0.95rem; color: #e0e0e0; }
+    .role-header span {
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+
+    .role p {
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+      color: #e0e0e0;
+    }
 
     /* RIGHT CONTACT COLUMN */
     .contact-column {
@@ -104,7 +131,10 @@
     }
 
     .contact-column h3 {
+      font-family: 'Inter', sans-serif;
       font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.6px;
       color: var(--pink);
       margin-bottom: 1.5rem;
     }
@@ -116,6 +146,7 @@
     }
 
     input, textarea {
+      font-family: 'Inter', sans-serif;
       padding: 0.9rem;
       border-radius: 6px;
       border: none;
@@ -125,6 +156,7 @@
     }
 
     button {
+      font-family: 'Inter', sans-serif;
       padding: 0.95rem;
       border-radius: 6px;
       border: none;
@@ -151,7 +183,6 @@
 
 <div class="layout">
 
-  <!-- LEFT INFO -->
   <aside>
     <h1>William MacLean</h1>
 
@@ -174,7 +205,6 @@
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main>
     <section>
       <h3>Professional Experience</h3>
@@ -225,10 +255,8 @@
     </section>
   </main>
 
-  <!-- CONTACT -->
   <div class="contact-column">
     <h3>Contact</h3>
-
     <form id="contact-form">
       <input type="text" name="name" placeholder="Your Name" required>
       <input type="email" name="email" placeholder="Your Email" required>
@@ -269,6 +297,3 @@
 
 </body>
 </html>
-
-
-
