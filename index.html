@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>William MacLean</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Comfortaa:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --pink: #B00B55;
+      --purple: #6a1b9a;
+      --black: #0f0f0f;
+      --white: #ffffff;
+      --gray: #b5b5b5;
+      --panel: #161616;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1b1b1b, var(--black));
+      color: var(--white);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      padding: 4rem 3rem;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Comfortaa', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--gray);
+      margin-bottom: 3.5rem;
+    }
+
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .link-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.4rem 1.5rem;
+      background: var(--panel);
+      border: 1px solid #242424;
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--white);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .link-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--pink);
+      box-shadow: 0 12px 30px rgba(176, 11, 85, 0.25);
+    }
+
+    footer {
+      margin-top: 4rem;
+      font-size: 0.85rem;
+      color: #8a8a8a;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2.4rem; }
+      .container { padding: 3rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>William MacLean</h1>
+    <p class="subtitle">Personal site · Resume · Projects · Future ideas</p>
+
+    <div class="links">
+      <!-- Resume -->
+      <a href="resume.html" class="link-card">View Resume</a>
+
+      <!-- Add more links by duplicating this block -->
+      <!-- <a href="projects.html" class="link-card">Projects</a> -->
+      <!-- <a href="contact.html" class="link-card">Contact</a> -->
+    </div>
+
+    <footer>
+      © 2026 William MacLean
+    </footer>
+  </div>
+
+</body>
+</html>
