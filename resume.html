@@ -29,7 +29,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 300px minmax(700px, 1fr) 340px;
+      grid-template-columns: 300px 1fr 340px;
       min-height: 100vh;
     }
 
@@ -66,7 +66,8 @@
     /* MAIN */
     main {
       padding: 4rem 3.5rem;
-      max-width: 1100px;
+      max-width: 900px;
+      margin: 0 auto; /* centers between columns */
     }
 
     section { margin-bottom: 4rem; }
@@ -106,13 +107,12 @@
     }
 
     .home-button {
-      display: block;
-      width: 100%;
-      margin-bottom: 2.5rem;
-      padding: 0.85rem;
-      text-align: center;
-      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 2rem;
+      padding: 0.55rem 0.9rem;
+      border-radius: 8px;
       text-decoration: none;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--white);
       background: linear-gradient(135deg, var(--purple), var(--pink));
@@ -120,8 +120,8 @@
     }
 
     .home-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(176, 11, 85, 0.25);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(176, 11, 85, 0.25);
     }
 
     .contact-column h3 {
@@ -165,6 +165,7 @@
     @media (max-width: 1100px) {
       .layout { grid-template-columns: 1fr; }
       aside, .contact-column { border: none; }
+      main { max-width: 100%; }
     }
   </style>
 </head>
