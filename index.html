@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>William MacLellan | Professional Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink: #B00B55;
+      --purple: #6a1b9a;
+      --black: #0f0f0f;
+      --white: #ffffff;
+      --gray: #b5b5b5;
+      --panel: #161616;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1b1b1b, var(--black));
+      color: var(--white);
+      line-height: 1.65;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 300px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    aside {
+      background: linear-gradient(180deg, #141414, #0c0c0c);
+      padding: 3rem 2rem;
+      border-right: 1px solid #222;
+    }
+
+    aside h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-section { margin-bottom: 2.2rem; }
+
+    .sidebar-section h3 {
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 0.75rem;
+    }
+
+    .sidebar-section p {
+      font-size: 0.9rem;
+      color: #e0e0e0;
+      margin-bottom: 0.4rem;
+    }
+
+    /* MAIN */
+    main {
+      padding: 4rem 3rem;
+      max-width: 900px;
+    }
+
+    section { margin-bottom: 4rem; }
+
+    section h3 {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      color: var(--pink);
+      border-left: 4px solid var(--pink);
+      padding-left: 1rem;
+    }
+
+    .role {
+      background: var(--panel);
+      padding: 1.75rem 2rem;
+      border-radius: 12px;
+      border: 1px solid #242424;
+      margin-bottom: 2rem;
+    }
+
+    .role-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .role-header h4 { font-size: 1.1rem; font-weight: 600; }
+    .role-header span { font-size: 0.9rem; color: var(--gray); }
+
+    .role p { font-size: 0.95rem; color: #e0e0e0; }
+
+    /* RIGHT CONTACT COLUMN */
+    .contact-column {
+      padding: 4rem 2.5rem;
+      border-left: 1px solid #222;
+      background: #111;
+    }
+
+    .contact-column h3 {
+      font-size: 1.3rem;
+      color: var(--pink);
+      margin-bottom: 1.5rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    input, textarea {
+      padding: 0.9rem;
+      border-radius: 6px;
+      border: none;
+      background: #1f1f1f;
+      color: var(--white);
+      font-size: 0.95rem;
+    }
+
+    button {
+      padding: 0.95rem;
+      border-radius: 6px;
+      border: none;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      aside, .contact-column { border: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- LEFT INFO -->
+  <aside>
+    <h1>William MacLean</h1>
+
+    <div class="sidebar-section">
+      <h3>Contact</h3>
+      <p>519-807-8017</p>
+      <p>wmacl006@gmail.com</p>
+      <p>808-545 Rideau St, Ottawa, ON - K1N 0E3</p>
+      <p>1164 West River Rd, Cambridge, ON - N1R 5S5</p>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Core Strengths</h3>
+      <p>Bilingual: English & French</p>
+      <p>Critical Thinking</p>
+      <p>Logistics & Coordination</p>
+      <p>Mathematics</p>
+      <p>Problem Solving</p>
+      <p>Proficient with technology</p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <section>
+      <h3>Professional Experience</h3>
+
+      <div class="role">
+        <div class="role-header">
+          <h4>IATSE Local 471 — Stagehand</h4>
+          <span>2025 – Present</span>
+        </div>
+        <p>Stagehand supporting carpentry, lighting, audio, truck loading in the Ottawa region.</p>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h4>IATSE Local 357 — Stagehand</h4>
+          <span>2022 – Present</span>
+        </div>
+        <p>Stagehand supporting carpentry, lighting, audio, pyrotechnics, truck loading, and camera operations in the Kitchener - Waterloo region.</p>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h4>Gypsy Wind Custom Coach</h4>
+          <span>2018 – Present</span>
+        </div>
+        <p>Runner and general labourer supporting transportation and on-site operations.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3>Education</h3>
+
+      <div class="role">
+        <div class="role-header">
+          <h4>University of Ottawa</h4>
+          <span>2024 – Present</span>
+        </div>
+        <p>Financial Mathematics and Economics</p>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h4>Grand River Collegiate Institute</h4>
+          <span>2020 – 2024</span>
+        </div>
+        <p>High School Diploma</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- RIGHT CONTACT -->
+  <div class="contact-column">
+    <h3>Contact</h3>
+    <form action="https://formspree.io/f/xgooeebl" method="POST">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+  </div>
+
+</div>
+
+</body>
+</html>
