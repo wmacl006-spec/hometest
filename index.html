@@ -11,7 +11,6 @@
   <style>
     :root {
       --pink: #B00B55;
-      --purple: #6a1b9a;
       --black: #0f0f0f;
       --white: #ffffff;
       --gray: #b5b5b5;
@@ -28,25 +27,9 @@
       font-family: 'Inter', sans-serif;
       background: radial-gradient(circle at top, #1b1b1b, var(--black));
       color: var(--white);
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    /* Page-edge pink glow (#B00B55) */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      box-shadow:
-        inset 0 0 0 1px rgba(176, 11, 85, 0.35),
-        inset 0 0 80px rgba(176, 11, 85, 0.35);
-      z-index: 0;
     }
 
     .content {
-      position: relative;
-      z-index: 1;
       width: 100%;
       max-width: 900px;
       padding: 4rem 3rem;
@@ -59,6 +42,11 @@
       font-weight: 700;
       letter-spacing: 1px;
       margin-bottom: 1rem;
+
+      /* Name glow */
+      text-shadow:
+        0 0 6px rgba(176, 11, 85, 0.35),
+        0 0 18px rgba(176, 11, 85, 0.25);
     }
 
     .subtitle {
