@@ -107,22 +107,31 @@
     }
 
     .home-button {
-      display: inline-block;
-      margin-bottom: 2rem;
-      padding: 0.55rem 0.9rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--white);
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    padding: 0.6rem 1.1rem;
+
+    background: var(--panel);
+    border: 1px solid #242424;
+    border-radius: 10px;
+
+    text-decoration: none;
+    color: var(--white);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     .home-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(176, 11, 85, 0.25);
+    transform: translateY(-2px);
+    border-color: var(--pink);
+    box-shadow: 0 10px 24px rgba(176, 11, 85, 0.25);
     }
+
 
     .contact-column h3 {
       font-size: 1.3rem;
@@ -305,6 +314,7 @@
 
 </body>
 </html>
+
 
 
 
