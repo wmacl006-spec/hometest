@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cute Animal Survival</title>
 
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Comfortaa:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -70,6 +69,8 @@ button:hover {
 
 #leaderboard { margin-top: 1rem; }
 #leaderboard ol { list-style: decimal; padding-left: 1rem; color: var(--white); }
+
+#tryAgainBtn { display: none; margin-top: 1rem; }
 </style>
 </head>
 <body>
@@ -115,12 +116,14 @@ button:hover {
             Food: <span id="foodCount">0</span> | Water: <span id="waterCount">0</span>
         </div>
 
-        <div>
+        <div id="gameControls">
             <button id="feedBtn">Feed</button>
             <button id="waterBtn">Give Water</button>
             <button id="upgradeFoodBtn">Upgrade Food Generator</button>
             <button id="upgradeWaterBtn">Upgrade Water Generator</button>
         </div>
+
+        <button id="tryAgainBtn">Try Again</button>
 
         <!-- Leaderboard -->
         <h2>Leaderboard</h2>
@@ -132,9 +135,8 @@ button:hover {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
 
-// Firebase config
 const firebaseConfig = {
     databaseURL: "https://lilguys-ae7fe-default-rtdb.firebaseio.com/"
 };
@@ -156,15 +158,15 @@ document.getElementById('upgradeWaterBtn').addEventListener('click', () => upgra
 document.querySelectorAll('.animal-select img').forEach(img => {
     img.addEventListener('click', () => chooseAnimal(img.dataset.animal, img));
 });
+document.getElementById('tryAgainBtn').addEventListener('click', resetGame);
 
 // --- Functions ---
 async function login() {
     password = document.getElementById('passwordInput').value.trim();
     if(!password) return alert("Enter a password");
 
-    // Check if password is blocked
     const blockSnap = await get(ref(db, 'blockedPasswords/' + password));
-    if(blockSnap.exists()) return alert("This password has already been used. Please choose a different password.");
+    if(blockSnap.exists()) return alert("This password has already been used.");
 
     loadPlayer(password, (data) => {
         player = data;
@@ -197,6 +199,8 @@ function startGame() {
     document.getElementById('game').style.display = 'block';
     document.getElementById('animalName').innerText = `${player.nickname} (${player.animal.toUpperCase()})`;
     document.getElementById('animalImg').src = getAnimalImg(player.animal);
+    document.getElementById('tryAgainBtn').style.display = 'none';
+    document.getElementById('gameControls').style.display = 'block';
 
     if(gameInterval) clearInterval(gameInterval);
     gameInterval = setInterval(gameTick, 1000);
@@ -226,7 +230,6 @@ function gameTick() {
 
     player.food += player.foodGeneratorLevel * delta * 0.5;
     player.water += player.waterGeneratorLevel * delta * 0.5;
-
     player.lastUpdate = now;
     savePlayer();
 
@@ -238,25 +241,7 @@ function gameTick() {
 
     if(player.health <= 0) {
         clearInterval(gameInterval);
-        const survivalTime = Date.now() - player.startTime;
-        alert(`${player.nickname} has died!`);
-
-        // Save to leaderboard
-        set(ref(db, 'leaderboard/' + password), {
-            nickname: player.nickname,
-            survivalTime: survivalTime
-        });
-
-        // Block password
-        set(ref(db, 'blockedPasswords/' + password), true);
-
-        // Sign out
-        player = null;
-        password = '';
-        selectedAnimal = '';
-        document.getElementById('game').style.display = 'none';
-        document.getElementById('login').style.display = 'block';
-        updateLeaderboard();
+        endGame();
     }
 }
 
@@ -303,21 +288,62 @@ function loadPlayer(pass, callback) {
     });
 }
 
+async function endGame() {
+    const survivalTime = Date.now() - player.startTime;
+
+    // Save to leaderboard
+    await set(ref(db, 'leaderboard/' + password), {
+        nickname: player.nickname,
+        survivalTime: survivalTime
+    });
+
+    // Block password
+    await set(ref(db, 'blockedPasswords/' + password), true);
+
+    // Disable game controls
+    document.getElementById('gameControls').style.display = 'none';
+    document.getElementById('tryAgainBtn').style.display = 'inline-block';
+
+    // Update leaderboard
+    updateLeaderboard();
+}
+
+function resetGame() {
+    player = null;
+    password = '';
+    selectedAnimal = '';
+    document.getElementById('login').style.display = 'block';
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('nicknameInput').value = '';
+    document.getElementById('animalChoice').style.display = 'none';
+    document.getElementById('tryAgainBtn').style.display = 'none';
+}
+
 // Leaderboard
 function updateLeaderboard() {
     get(ref(db, 'leaderboard/')).then(snapshot => {
         const data = snapshot.val();
-        if(!data) return;
+        if(!data) {
+            document.getElementById('leaderboard').innerHTML = '<p>No entries yet</p>';
+            return;
+        }
         const arr = Object.values(data).sort((a,b) => b.survivalTime - a.survivalTime);
         let html = '<ol>';
         arr.forEach(entry => {
-            const seconds = Math.floor(entry.survivalTime/1000);
-            html += `<li>${entry.nickname} - ${seconds}s</li>`;
+            const ms = entry.survivalTime;
+            const minutes = Math.floor(ms/60000);
+            const seconds = Math.floor((ms % 60000)/1000);
+            html += `<li>${entry.nickname} - ${minutes}m ${seconds}s</li>`;
         });
         html += '</ol>';
         document.getElementById('leaderboard').innerHTML = html;
     });
 }
+
+// Load leaderboard on start
+updateLeaderboard();
 </script>
+
 </body>
 </html>
