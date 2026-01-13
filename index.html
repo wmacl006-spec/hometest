@@ -70,7 +70,6 @@ button:hover {
 
 #leaderboard { margin-top: 1rem; }
 #leaderboard ol { list-style: decimal; padding-left: 1rem; color: var(--white); }
-
 </style>
 </head>
 <body>
@@ -133,7 +132,7 @@ button:hover {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -145,6 +144,7 @@ const db = getDatabase(app);
 let player = null;
 let password = '';
 let selectedAnimal = '';
+let gameInterval = null;
 
 // --- Event Listeners ---
 document.getElementById('startBtn').addEventListener('click', login);
@@ -158,9 +158,14 @@ document.querySelectorAll('.animal-select img').forEach(img => {
 });
 
 // --- Functions ---
-function login() {
+async function login() {
     password = document.getElementById('passwordInput').value.trim();
     if(!password) return alert("Enter a password");
+
+    // Check if password is blocked
+    const blockSnap = await get(ref(db, 'blockedPasswords/' + password));
+    if(blockSnap.exists()) return alert("This password has already been used. Please choose a different password.");
+
     loadPlayer(password, (data) => {
         player = data;
         if(!player.animal) document.getElementById('animalChoice').style.display = 'block';
@@ -178,6 +183,7 @@ function confirmAnimal() {
     const nickname = document.getElementById('nicknameInput').value.trim();
     if(!selectedAnimal) return alert("Pick an animal!");
     if(!nickname) return alert("Enter a nickname!");
+
     player.animal = selectedAnimal;
     player.nickname = nickname;
     player.startTime = Date.now();
@@ -191,7 +197,9 @@ function startGame() {
     document.getElementById('game').style.display = 'block';
     document.getElementById('animalName').innerText = `${player.nickname} (${player.animal.toUpperCase()})`;
     document.getElementById('animalImg').src = getAnimalImg(player.animal);
-    setInterval(gameTick, 1000);
+
+    if(gameInterval) clearInterval(gameInterval);
+    gameInterval = setInterval(gameTick, 1000);
 }
 
 function getAnimalImg(animal) {
@@ -222,7 +230,6 @@ function gameTick() {
     player.lastUpdate = now;
     savePlayer();
 
-    // Update UI
     document.getElementById('hungerBar').style.width = player.hunger + '%';
     document.getElementById('thirstBar').style.width = player.thirst + '%';
     document.getElementById('healthBar').style.width = player.health + '%';
@@ -230,12 +237,26 @@ function gameTick() {
     document.getElementById('waterCount').innerText = Math.floor(player.water);
 
     if(player.health <= 0) {
+        clearInterval(gameInterval);
+        const survivalTime = Date.now() - player.startTime;
         alert(`${player.nickname} has died!`);
+
+        // Save to leaderboard
         set(ref(db, 'leaderboard/' + password), {
             nickname: player.nickname,
-            survivalTime: Date.now() - player.startTime
+            survivalTime: survivalTime
         });
-        return;
+
+        // Block password
+        set(ref(db, 'blockedPasswords/' + password), true);
+
+        // Sign out
+        player = null;
+        password = '';
+        selectedAnimal = '';
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('login').style.display = 'block';
+        updateLeaderboard();
     }
 }
 
@@ -298,6 +319,5 @@ function updateLeaderboard() {
     });
 }
 </script>
-
 </body>
 </html>
