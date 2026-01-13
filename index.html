@@ -30,17 +30,9 @@ body {
     padding: 2rem;
 }
 
-.container {
-    width: 100%;
-    max-width: 800px;
-    text-align: center;
-}
+.container { width: 100%; max-width: 800px; text-align: center; }
 
-h1, h2 {
-    font-family: 'Comfortaa', sans-serif;
-    color: var(--pink);
-}
-
+h1, h2 { font-family: 'Comfortaa', sans-serif; color: var(--pink); }
 h1 { font-size: 2.5rem; margin-bottom: 1rem; }
 h2 { font-size: 1.8rem; margin-bottom: 1rem; }
 
@@ -88,9 +80,12 @@ button:hover {
         <div id="animalChoice" style="display:none; margin-top: 1rem;">
             <h2>Pick an animal & name it</h2>
             <div class="animal-select">
-                <img src="https://i.imgur.com/Oy7B2Bz.png" alt="Cat" data-animal="cat">
-                <img src="https://i.imgur.com/yzs2kqA.png" alt="Dog" data-animal="dog">
-                <img src="https://i.imgur.com/hRtkGdf.png" alt="Bunny" data-animal="bunny">
+                <img src="cat_alive.png" alt="Cat" data-animal="cat">
+                <img src="dog_alive.png" alt="Dog" data-animal="dog">
+                <img src="bunny_alive.png" alt="Bunny" data-animal="bunny">
+                <img src="squirrel_alive.png" alt="Flying Squirrel" data-animal="squirrel">
+                <img src="chicken_alive.png" alt="Chicken" data-animal="chicken">
+                <img src="manatee_alive.png" alt="Manatee" data-animal="manatee">
             </div>
             <input type="text" id="nicknameInput" placeholder="Name your animal">
             <button id="confirmAnimalBtn">Confirm</button>
@@ -125,7 +120,6 @@ button:hover {
 
         <button id="tryAgainBtn">Try Again</button>
 
-        <!-- Leaderboard -->
         <h2>Leaderboard</h2>
         <div id="leaderboard"></div>
         <button onclick="updateLeaderboard()">Refresh Leaderboard</button>
@@ -147,6 +141,16 @@ let player = null;
 let password = '';
 let selectedAnimal = '';
 let gameInterval = null;
+
+// --- Images ---
+const animalImages = {
+    cat: { alive: "cat_alive.png", dead: "cat_dead.png" },
+    dog: { alive: "dog_alive.png", dead: "dog_dead.png" },
+    bunny: { alive: "bunny_alive.png", dead: "bunny_dead.png" },
+    squirrel: { alive: "squirrel_alive.png", dead: "squirrel_dead.png" },
+    chicken: { alive: "chicken_alive.png", dead: "chicken_dead.png" },
+    manatee: { alive: "manatee_alive.png", dead: "manatee_dead.png" }
+};
 
 // --- Event Listeners ---
 document.getElementById('startBtn').addEventListener('click', login);
@@ -206,12 +210,8 @@ function startGame() {
     gameInterval = setInterval(gameTick, 1000);
 }
 
-function getAnimalImg(animal) {
-    switch(animal) {
-        case 'cat': return "https://i.imgur.com/Oy7B2Bz.png";
-        case 'dog': return "https://i.imgur.com/yzs2kqA.png";
-        case 'bunny': return "https://i.imgur.com/hRtkGdf.png";
-    }
+function getAnimalImg(animal, dead=false) {
+    return dead ? animalImages[animal].dead : animalImages[animal].alive;
 }
 
 function gameTick() {
@@ -241,6 +241,7 @@ function gameTick() {
 
     if(player.health <= 0) {
         clearInterval(gameInterval);
+        document.getElementById('animalImg').src = getAnimalImg(player.animal, true);
         endGame();
     }
 }
@@ -291,20 +292,14 @@ function loadPlayer(pass, callback) {
 async function endGame() {
     const survivalTime = Date.now() - player.startTime;
 
-    // Save to leaderboard
     await set(ref(db, 'leaderboard/' + password), {
         nickname: player.nickname,
         survivalTime: survivalTime
     });
-
-    // Block password
     await set(ref(db, 'blockedPasswords/' + password), true);
 
-    // Disable game controls
     document.getElementById('gameControls').style.display = 'none';
     document.getElementById('tryAgainBtn').style.display = 'inline-block';
-
-    // Update leaderboard
     updateLeaderboard();
 }
 
@@ -320,7 +315,6 @@ function resetGame() {
     document.getElementById('tryAgainBtn').style.display = 'none';
 }
 
-// Leaderboard
 function updateLeaderboard() {
     get(ref(db, 'leaderboard/')).then(snapshot => {
         const data = snapshot.val();
@@ -341,7 +335,7 @@ function updateLeaderboard() {
     });
 }
 
-// Load leaderboard on start
+// Load leaderboard immediately
 updateLeaderboard();
 </script>
 
