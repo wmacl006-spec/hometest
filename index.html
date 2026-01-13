@@ -19,16 +19,16 @@
 <div id="login">
     <h2>Login / Signup</h2>
     <input type="password" id="passwordInput" placeholder="Enter password">
-    <button onclick="login()">Start</button>
+    <button id="startBtn">Start</button>
 
     <div id="animalChoice" style="display:none;">
         <h3>Choose your cute animal</h3>
         <div class="animal-select">
-            <img src="https://i.imgur.com/Oy7B2Bz.png" alt="Cat" onclick="chooseAnimal('cat', this)">
-            <img src="https://i.imgur.com/yzs2kqA.png" alt="Dog" onclick="chooseAnimal('dog', this)">
-            <img src="https://i.imgur.com/hRtkGdf.png" alt="Bunny" onclick="chooseAnimal('bunny', this)">
+            <img src="https://i.imgur.com/Oy7B2Bz.png" alt="Cat" data-animal="cat">
+            <img src="https://i.imgur.com/yzs2kqA.png" alt="Dog" data-animal="dog">
+            <img src="https://i.imgur.com/hRtkGdf.png" alt="Bunny" data-animal="bunny">
         </div>
-        <button onclick="confirmAnimal()">Confirm</button>
+        <button id="confirmAnimalBtn">Confirm</button>
     </div>
 </div>
 
@@ -51,10 +51,10 @@
     </div>
 
     <div>
-        <button onclick="feed()">Feed</button>
-        <button onclick="giveWater()">Give Water</button>
-        <button onclick="upgradeGenerator('food')">Upgrade Food Generator</button>
-        <button onclick="upgradeGenerator('water')">Upgrade Water Generator</button>
+        <button id="feedBtn">Feed</button>
+        <button id="waterBtn">Give Water</button>
+        <button id="upgradeFoodBtn">Upgrade Food Generator</button>
+        <button id="upgradeWaterBtn">Upgrade Water Generator</button>
     </div>
 </div>
 
@@ -73,6 +73,20 @@ let player = null;
 let password = '';
 let selectedAnimal = '';
 
+// ----------- Event Listeners ----------
+document.getElementById('startBtn').addEventListener('click', login);
+document.getElementById('confirmAnimalBtn').addEventListener('click', confirmAnimal);
+document.getElementById('feedBtn').addEventListener('click', feed);
+document.getElementById('waterBtn').addEventListener('click', giveWater);
+document.getElementById('upgradeFoodBtn').addEventListener('click', () => upgradeGenerator('food'));
+document.getElementById('upgradeWaterBtn').addEventListener('click', () => upgradeGenerator('water'));
+
+// Animal selection click
+document.querySelectorAll('.animal-select img').forEach(img => {
+    img.addEventListener('click', () => chooseAnimal(img.dataset.animal, img));
+});
+
+// ----------- Functions ----------
 function login() {
     password = document.getElementById('passwordInput').value.trim();
     if(!password) return alert("Enter a password");
@@ -106,7 +120,7 @@ function startGame() {
     document.getElementById('animalName').innerText = player.animal.toUpperCase();
     document.getElementById('animalImg').src = getAnimalImg(player.animal);
 
-    // Game loop
+    // Game loop every second
     setInterval(gameTick, 1000);
 }
 
@@ -121,14 +135,12 @@ function getAnimalImg(animal) {
 function gameTick() {
     const now = Date.now();
     const delta = (now - player.lastUpdate) / 1000;
-    
-    // Hunger/Thirst decay
+
     player.hunger -= delta * 0.5;
     player.thirst -= delta * 0.5;
     if(player.hunger < 0) player.hunger = 0;
     if(player.thirst < 0) player.thirst = 0;
 
-    // Health decay
     if(player.hunger === 0 || player.thirst === 0) {
         player.health -= delta * 1;
         if(player.health < 0) player.health = 0;
