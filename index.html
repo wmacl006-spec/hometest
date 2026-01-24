@@ -298,12 +298,7 @@ function updateToolbar(){
 updateToolbar();
 
 /* ---------- ROOM ---------- */
-window.hostRoom = () => { 
-  isHost = true;                     // ✅ set host first
-  roomCode = Math.random().toString(36).slice(2,7).toUpperCase(); 
-  start();
-};
-
+window.hostRoom=()=>{isHost=true;roomCode=Math.random().toString(36).slice(2,7).toUpperCase();start()};
 window.joinRoom=()=>{roomCode=joinInput.value.toUpperCase();if(roomCode)start()};
 
 async function start(){
@@ -319,43 +314,25 @@ async function start(){
   const pdfRef=ref(db,`rooms/${roomCode}/pdf`);
   const drawRef=ref(db,`rooms/${roomCode}/draw`);
 
-  if (isHost){
-  pdfUpload.onchange = async e=>{
-    const f = e.target.files[0];
-    const r = sRef(storage,`pdfs/${roomCode}.pdf`);
-    await uploadBytes(r,f);
-    pdfUrl = await getDownloadURL(r);
-    await set(pdfRef,pdfUrl);
+  if(isHost){
+    pdfUpload.onchange=async e=>{
+      const f=e.target.files[0];
+      const r=sRef(storage,`pdfs/${roomCode}.pdf`);
+      await uploadBytes(r,f);
+      pdfUrl=await getDownloadURL(r);
+      await set(pdfRef,pdfUrl);
+      renderPDF(pdfUrl);
+    };
+  }
 
-    await renderPDF(pdfUrl); // ✅ await ensures canvases exist before drawing
-  };
-}
+  const snap=await get(pdfRef);
+  if(snap.exists()){pdfUrl=snap.val();renderPDF(pdfUrl);}
 
-
-
-  const snap = await get(pdfRef);
-if (snap.exists()) {
-  pdfUrl = snap.val();
-
-  // 1️⃣ render pages first
-  await renderPDF(pdfUrl);
-
-  const drawRef = ref(db, `rooms/${roomCode}/draw`);
-
-  // 2️⃣ replay all previous strokes
-  await replayAllStrokes(drawRef);
-
-  // 3️⃣ listen for new strokes only
-  onChildAdded(drawRef, s => drawStroke(s.val()));
-}
-
+  onChildAdded(drawRef,s=>drawStroke(s.val()));
 }
 
 /* ---------- DRAWING ---------- */
 function drawStroke(s){
-  
-  if (!s || !s.page) return;
-
   const c=document.getElementById(`draw-${s.page}`);
   if(!c) return;
   const ctx=c.getContext("2d");
@@ -394,8 +371,7 @@ async function renderPDF(url){
     w.append(pc,dc);
     viewer.appendChild(w);
     await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
-    if (isHost) enableDrawing(dc, i);
-
+    enableDrawing(dc,i);
   }
 }
 
@@ -412,30 +388,16 @@ function enableDrawing(c,page){
     if(!d) return;
     const b=c.getBoundingClientRect();
     const x=e.clientX-b.left,y=e.clientY-b.top;
-    push(r, {
-  page,
-  x1: lx, y1: ly,
-  x2: x,  y2: y,
-  color: profiles[activeProfile],
-  erase: tool === "eraser",
-  size: brushSize,
-  hostOnly: true
-});
-
+    push(r,{
+      page,
+      x1:lx,y1:ly,x2:x,y2:y,
+      color:profiles[activeProfile],
+      erase:tool==="eraser",
+      size:brushSize
+    });
     lx=x; ly=y;
   };
 }
-
-  /* ---------- REPLAY EXISTING STROKES ---------- */
-async function replayAllStrokes(drawRef) {
-  const snap = await get(drawRef);
-  if (!snap.exists()) return;
-
-  snap.forEach(child => {
-    drawStroke(child.val());
-  });
-}
-
 
   /* ---------- KEYBINDS ---------- */
 const defaultBinds = {
@@ -483,8 +445,6 @@ document.addEventListener("keydown", e => {
     tool = "eraser"; updateToolbar();
   }
 });
-
-  
 
 
 /* ---------- EXPORT ---------- */
