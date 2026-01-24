@@ -1,74 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Host</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 <style>
-body {
-  margin: 0;
-  background: #0f0f0f;
-  font-family: system-ui, sans-serif;
-  color: #eee;
-}
-
+body { margin:0; background:#0f0f0f; color:#eee; font-family:system-ui; }
 header {
-  height: 56px;
-  background: #181818;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 16px;
-  border-bottom: 1px solid #222;
+  height:56px; background:#181818;
+  display:flex; align-items:center; gap:16px;
+  padding:0 16px; border-bottom:1px solid #222;
 }
-
-header span {
-  color: #b00b55;
-  font-weight: 600;
-}
-
-main {
-  display: flex;
-  justify-content: center;
-  padding: 24px 0;
-}
-
-#pages {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.page {
-  position: relative;
-  margin: 0 auto;
-  box-shadow: 0 10px 40px rgba(0,0,0,.6);
-}
-
-.page canvas {
-  display: block;
-}
-
+header span { color:#b00b55; font-weight:600; }
+#pages { display:flex; flex-direction:column; gap:24px; padding:24px; }
+.page { position:relative; margin:auto; }
 .draw {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position:absolute; top:0; left:0;
 }
 </style>
 </head>
-
 <body>
+
 <header>
   <span>Host</span>
-  <div>Room: <b id="roomLabel"></b></div>
+  Room <b id="roomLabel"></b>
   <input type="file" id="pdfInput" accept="application/pdf">
 </header>
 
-<main>
-  <div id="pages"></div>
-</main>
+<div id="pages"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -92,14 +51,13 @@ signInAnonymously(getAuth(app));
 
 const room = new URLSearchParams(location.search).get("room");
 roomLabel.textContent = room;
+
 await setDoc(doc(db, "rooms", room), { created: Date.now() });
 
 const pagesEl = document.getElementById("pages");
 
 pdfInput.onchange = async e => {
   const file = e.target.files[0];
-  if (!file) return;
-
   const r = ref(storage, `pdfs/${room}.pdf`);
   await uploadBytes(r, file);
   const url = await getDownloadURL(r);
@@ -111,30 +69,29 @@ async function renderPDF(url) {
   pagesEl.innerHTML = "";
   const pdf = await pdfjsLib.getDocument(url).promise;
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
     const vp = page.getViewport({ scale: 1.5 });
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "page";
+    const wrap = document.createElement("div");
+    wrap.className = "page";
 
-    const pdfCanvas = document.createElement("canvas");
-    const drawCanvas = document.createElement("canvas");
-    drawCanvas.className = "draw";
+    const pdfC = document.createElement("canvas");
+    const drawC = document.createElement("canvas");
+    drawC.className = "draw";
 
-    pdfCanvas.width = drawCanvas.width = vp.width;
-    pdfCanvas.height = drawCanvas.height = vp.height;
+    pdfC.width = drawC.width = vp.width;
+    pdfC.height = drawC.height = vp.height;
 
-    wrapper.appendChild(pdfCanvas);
-    wrapper.appendChild(drawCanvas);
-    pagesEl.appendChild(wrapper);
+    wrap.append(pdfC, drawC);
+    pagesEl.appendChild(wrap);
 
     await page.render({
-      canvasContext: pdfCanvas.getContext("2d"),
+      canvasContext: pdfC.getContext("2d"),
       viewport: vp
     }).promise;
 
-    setupDrawing(drawCanvas, i);
+    setupDrawing(drawC, p);
   }
 }
 
@@ -143,50 +100,41 @@ function setupDrawing(canvas, page) {
   ctx.lineCap = ctx.lineJoin = "round";
 
   let drawing = false;
-  let active = [];
-  let strokes = [];
+  let points = [];
 
   canvas.addEventListener("pointerdown", e => {
     drawing = true;
-    active = [[e.offsetX, e.offsetY]];
-    canvas.setPointerCapture(e.pointerId);
+    points = [[e.offsetX, e.offsetY]];
   });
 
   canvas.addEventListener("pointermove", e => {
     if (!drawing) return;
-    active.push([e.offsetX, e.offsetY]);
+    points.push([e.offsetX, e.offsetY]);
     redraw();
   });
 
   canvas.addEventListener("pointerup", async () => {
     drawing = false;
+    redraw();
 
-    const stroke = {
+    await addDoc(collection(db, "rooms", room, "strokes"), {
       page,
-      points: active,
+      points,
       color: "#b00b55",
       width: 3,
       ts: Date.now()
-    };
+    });
 
-    strokes.push(stroke);
-    active = [];
-    redraw();
-
-    await addDoc(collection(db, "rooms", room, "strokes"), stroke);
+    points = [];
   });
 
   function redraw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    strokes.forEach(draw);
-    if (active.length) draw({ points: active, color:"#b00b55", width:3 });
-  }
-
-  function draw(s) {
-    ctx.strokeStyle = s.color;
-    ctx.lineWidth = s.width;
+    if (!points.length) return;
+    ctx.strokeStyle = "#b00b55";
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    s.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
     ctx.stroke();
   }
 }
