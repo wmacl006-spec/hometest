@@ -297,24 +297,28 @@ input#joinInput:focus {
 
   #chatInputContainer {
   display: flex;
-  gap: 4px;               /* smaller gap */
-  padding: 4px 6px;       /* tighter padding */
+  flex-direction: row;   /* important: horizontal layout */
+  gap: 4px;
+  padding: 4px 6px;
+  align-items: center;   /* vertically align input and buttons */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #chatInputContainer input {
-  flex: 1;                /* fills available space */
+  flex: 1;               /* fills remaining space */
+  min-width: 0;          /* crucial to prevent flex overflow */
   padding: 6px 8px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #111;
   color: white;
-  min-width: 0;           /* prevents overflow in flex */
 }
 
 #chatInputContainer button {
-  flex: 0 0 auto;         /* button width adapts to content */
-  padding: 0 8px;         /* make thinner horizontally */
-  height: 36px;           /* same height as input for alignment */
+  flex: 0 0 auto;        /* button size depends on content */
+  padding: 0 8px;
+  height: 36px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
@@ -324,12 +328,12 @@ input#joinInput:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition);
 }
 
 #chatInputContainer button:hover {
   background: var(--accent-hover);
 }
+
 
 
 #chatInputContainer input:disabled {
