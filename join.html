@@ -37,10 +37,14 @@ main {
 
 .page {
   position: relative;
+  margin: 0 auto;
 }
 
-canvas {
-  display: block;
+.draw {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }
 </style>
 </head>
@@ -76,7 +80,8 @@ const room = new URLSearchParams(location.search).get("room");
 roomLabel.textContent = room;
 
 const pagesEl = document.getElementById("pages");
-const pageCanvases = {};
+const pageCtx = {};
+const strokeBuffer = [];
 
 const roomDoc = await getDoc(doc(db, "rooms", room));
 if (!roomDoc.exists()) alert("Room not found");
@@ -95,32 +100,40 @@ async function renderPDF(url) {
 
     const pdfCanvas = document.createElement("canvas");
     const drawCanvas = document.createElement("canvas");
+    drawCanvas.className = "draw";
 
     pdfCanvas.width = drawCanvas.width = vp.width;
     pdfCanvas.height = drawCanvas.height = vp.height;
-    drawCanvas.style.pointerEvents = "none";
 
     wrapper.appendChild(pdfCanvas);
     wrapper.appendChild(drawCanvas);
     pagesEl.appendChild(wrapper);
 
-    pageCanvases[i] = drawCanvas.getContext("2d");
+    pageCtx[i] = drawCanvas.getContext("2d");
 
     await page.render({
       canvasContext: pdfCanvas.getContext("2d"),
       viewport: vp
     }).promise;
   }
+
+  strokeBuffer.forEach(drawStroke);
 }
 
 onSnapshot(collection(db, "rooms", room, "strokes"), snap => {
   snap.docChanges().forEach(c => {
-    if (c.type === "added") drawStroke(c.doc.data());
+    if (c.type === "added") {
+      if (pageCtx[c.doc.data().page]) {
+        drawStroke(c.doc.data());
+      } else {
+        strokeBuffer.push(c.doc.data());
+      }
+    }
   });
 });
 
 function drawStroke(s) {
-  const ctx = pageCanvases[s.page];
+  const ctx = pageCtx[s.page];
   if (!ctx) return;
 
   ctx.strokeStyle = s.color;
