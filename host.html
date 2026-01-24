@@ -8,13 +8,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
-  <h2>Host Room</h2>
+  <h2>Host</h2>
 
   <input type="file" id="pdfInput" accept="application/pdf" />
-  <br />
 
-  <canvas id="pdfCanvas"></canvas>
-  <canvas id="drawCanvas"></canvas>
+  <div id="canvasContainer">
+    <canvas id="pdfCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+  </div>
 
   <script type="module" src="host.js"></script>
 </body>
