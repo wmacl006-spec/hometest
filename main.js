@@ -6,20 +6,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 // ---------- Firebase ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  onSnapshot,
-  collection,
-  addDoc
+  getFirestore, doc, setDoc, getDoc, updateDoc,
+  onSnapshot, collection, addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
+  getStorage, ref, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 // ---------- Config ----------
@@ -46,6 +37,10 @@ const lobbyUI = document.getElementById("lobbyUI");
 const leaveBtn = document.getElementById("leaveRoom");
 const toolbar = document.getElementById("toolbar");
 
+const penBtn = document.getElementById("penTool");
+const eraserBtn = document.getElementById("eraserTool");
+const colorPicker = document.getElementById("colorPicker");
+
 // ---------- State ----------
 let roomId = null;
 let isTeacher = false;
@@ -53,7 +48,10 @@ let pdfDoc = null;
 let unsubRoom = null;
 let unsubAnnotations = null;
 
-// ---------- UI helpers ----------
+let tool = "pen";
+let color = "#b00b55";
+
+// ---------- UI ----------
 function enterRoomUI() {
   lobbyUI.classList.add("hidden");
   roomLabel.classList.remove("hidden");
@@ -62,9 +60,6 @@ function enterRoomUI() {
   if (isTeacher) {
     uploadBtn.classList.remove("hidden");
     toolbar.style.display = "flex";
-  } else {
-    uploadBtn.classList.add("hidden");
-    toolbar.style.display = "none";
   }
 }
 
@@ -76,41 +71,50 @@ function exitRoomUI() {
   toolbar.style.display = "none";
 }
 
-// ---------- Upload button ----------
+// ---------- Tools ----------
+penBtn.onclick = () => {
+  tool = "pen";
+  penBtn.classList.add("active");
+  eraserBtn.classList.remove("active");
+};
+
+eraserBtn.onclick = () => {
+  tool = "eraser";
+  eraserBtn.classList.add("active");
+  penBtn.classList.remove("active");
+};
+
+colorPicker.oninput = e => color = e.target.value;
+
+// ---------- Upload ----------
 uploadBtn.onclick = () => pdfUpload.click();
 
-// ---------- Create Room (Teacher) ----------
+// ---------- Create ----------
 document.getElementById("createRoom").onclick = async () => {
   roomId = crypto.randomUUID().slice(0, 6);
   isTeacher = true;
 
-  await setDoc(doc(db, "rooms", roomId), {
-    createdAt: Date.now()
-  });
+  await setDoc(doc(db, "rooms", roomId), { createdAt: Date.now() });
 
   roomLabel.textContent = `Room ${roomId}`;
   enterRoomUI();
 };
 
-// ---------- Join Room ----------
+// ---------- Join ----------
 document.getElementById("joinRoom").onclick = async () => {
   roomId = document.getElementById("roomInput").value.trim();
   if (!roomId) return;
 
-  // joining by code = student
   isTeacher = false;
-
   roomLabel.textContent = `Room ${roomId}`;
   enterRoomUI();
 
-  const roomRef = doc(db, "rooms", roomId);
-  const snap = await getDoc(roomRef);
-
+  const snap = await getDoc(doc(db, "rooms", roomId));
   if (snap.exists() && snap.data().pdfUrl) {
-    await loadPDF(snap.data().pdfUrl);
+    loadPDF(snap.data().pdfUrl);
   }
 
-  listenRoom(roomRef);
+  listenRoom();
   listenAnnotations();
 };
 
@@ -119,9 +123,6 @@ leaveBtn.onclick = () => {
   if (unsubRoom) unsubRoom();
   if (unsubAnnotations) unsubAnnotations();
 
-  unsubRoom = null;
-  unsubAnnotations = null;
-
   roomId = null;
   pdfDoc = null;
   viewer.innerHTML = "";
@@ -129,62 +130,49 @@ leaveBtn.onclick = () => {
   exitRoomUI();
 };
 
-// ---------- Upload PDF (Teacher only) ----------
+// ---------- Upload PDF ----------
 pdfUpload.onchange = async (e) => {
-  if (!isTeacher || !roomId) return;
+  if (!isTeacher) return;
 
   const file = e.target.files[0];
-  if (!file) return;
+  const refPdf = ref(storage, `pdfs/${roomId}.pdf`);
+  await uploadBytes(refPdf, file);
 
-  const storageRef = ref(storage, `pdfs/${roomId}.pdf`);
-  await uploadBytes(storageRef, file);
-
-  const url = await getDownloadURL(storageRef);
+  const url = await getDownloadURL(refPdf);
   await updateDoc(doc(db, "rooms", roomId), { pdfUrl: url });
 
   await loadPDF(url);
-  listenRoom(doc(db, "rooms", roomId));
+  listenRoom();
   listenAnnotations();
 };
 
-// ---------- Firestore: Room ----------
-function listenRoom(roomRef) {
+// ---------- Firestore ----------
+function listenRoom() {
   if (unsubRoom) unsubRoom();
-
-  unsubRoom = onSnapshot(roomRef, (snap) => {
-    const data = snap.data();
-    if (!data?.pdfUrl || pdfDoc) return;
-    loadPDF(data.pdfUrl);
+  unsubRoom = onSnapshot(doc(db, "rooms", roomId), snap => {
+    const d = snap.data();
+    if (d?.pdfUrl && !pdfDoc) loadPDF(d.pdfUrl);
   });
 }
 
-// ---------- Firestore: Annotations ----------
 function listenAnnotations() {
   if (unsubAnnotations) unsubAnnotations();
-
   unsubAnnotations = onSnapshot(
     collection(db, "rooms", roomId, "annotations"),
-    (snap) => {
-      snap.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          drawAnnotation(change.doc.data());
-        }
-      });
-    }
+    snap => snap.docChanges().forEach(c => {
+      if (c.type === "added") drawAnnotation(c.doc.data());
+    })
   );
 }
 
 // ---------- Load PDF ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
-  pdfDoc = null;
-
-  const buffer = await (await fetch(url)).arrayBuffer();
-  pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
+  pdfDoc = await pdfjsLib.getDocument(url).promise;
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     const page = await pdfDoc.getPage(i);
-    const viewport = page.getViewport({ scale: 1.4 });
+    const vp = page.getViewport({ scale: 1.4 });
 
     const pageDiv = document.createElement("div");
     pageDiv.className = "page";
@@ -192,110 +180,124 @@ async function loadPDF(url) {
     const base = document.createElement("canvas");
     const overlay = document.createElement("canvas");
 
-    base.width = overlay.width = viewport.width;
-    base.height = overlay.height = viewport.height;
+    base.width = overlay.width = vp.width;
+    base.height = overlay.height = vp.height;
+
+    base.style.width = overlay.style.width = `${vp.width}px`;
+    base.style.height = overlay.style.height = `${vp.height}px`;
+
     overlay.className = "overlay";
 
     pageDiv.append(base, overlay);
     viewer.appendChild(pageDiv);
 
-    await page.render({
-      canvasContext: base.getContext("2d"),
-      viewport
-    }).promise;
+    await page.render({ canvasContext: base.getContext("2d"), viewport: vp }).promise;
 
     setupDrawing(overlay, i);
   }
 }
 
 // ---------- Drawing ----------
-function setupDrawing(canvas, pageNumber) {
+function setupDrawing(canvas, page) {
   if (!isTeacher) return;
 
-  canvas.style.pointerEvents = "auto";
   const ctx = canvas.getContext("2d");
+  canvas.style.pointerEvents = "auto";
 
   let drawing = false;
   let points = [];
 
-  canvas.onmousedown = () => {
-    drawing = true;
-    points = [];
-    ctx.beginPath();
+  const pos = e => {
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) / r.width,
+      y: (e.clientY - r.top) / r.height
+    };
   };
 
-  canvas.onmousemove = (e) => {
+  canvas.onmousedown = e => {
+    drawing = true;
+    points = [];
+    const p = pos(e);
+    points.push(p);
+
+    ctx.beginPath();
+    ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
+  };
+
+  canvas.onmousemove = e => {
     if (!drawing) return;
+    const p = pos(e);
+    points.push(p);
 
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / canvas.width;
-    const y = (e.clientY - rect.top) / canvas.height;
+    ctx.globalCompositeOperation =
+      tool === "eraser" ? "destination-out" : "source-over";
 
-    points.push({ x, y });
-    ctx.strokeStyle = "#b00b55";
-    ctx.lineWidth = 2;
-    ctx.lineTo(x * canvas.width, y * canvas.height);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = tool === "eraser" ? 24 : 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.lineTo(p.x * canvas.width, p.y * canvas.height);
     ctx.stroke();
   };
 
   canvas.onmouseup = async () => {
     drawing = false;
-    ctx.beginPath();
+    ctx.globalCompositeOperation = "source-over";
 
-    await addDoc(
-      collection(db, "rooms", roomId, "annotations"),
-      { page: pageNumber, points, color: "#b00b55" }
-    );
+    await addDoc(collection(db, "rooms", roomId, "annotations"), {
+      page,
+      points,
+      color,
+      tool
+    });
   };
 }
 
-// ---------- Draw remote annotation ----------
+// ---------- Draw remote ----------
 function drawAnnotation(a) {
   const pageDiv = viewer.children[a.page - 1];
   if (!pageDiv) return;
 
-  const overlay = pageDiv.querySelector(".overlay");
-  const ctx = overlay.getContext("2d");
+  const canvas = pageDiv.querySelector(".overlay");
+  const ctx = canvas.getContext("2d");
 
   ctx.beginPath();
+  ctx.globalCompositeOperation =
+    a.tool === "eraser" ? "destination-out" : "source-over";
+
   ctx.strokeStyle = a.color;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = a.tool === "eraser" ? 24 : 2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
   a.points.forEach((p, i) => {
-    const x = p.x * overlay.width;
-    const y = p.y * overlay.height;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    const x = p.x * canvas.width;
+    const y = p.y * canvas.height;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
   });
 
   ctx.stroke();
+  ctx.globalCompositeOperation = "source-over";
 }
 
 // ---------- Download ----------
 document.getElementById("downloadPdf").onclick = () => {
-  if (!pdfDoc) return;
-
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
-  [...viewer.children].forEach((pageDiv, i) => {
-    const canvases = pageDiv.querySelectorAll("canvas");
-    const base = canvases[0];
-    const overlay = canvases[1];
-
-    const temp = document.createElement("canvas");
-    temp.width = base.width;
-    temp.height = base.height;
-
-    const ctx = temp.getContext("2d");
-    ctx.drawImage(base, 0, 0);
-    ctx.drawImage(overlay, 0, 0);
-
-    const img = temp.toDataURL("image/jpeg", 1);
-
-    if (i > 0) pdf.addPage();
+  [...viewer.children].forEach((p, i) => {
+    const [b, o] = p.querySelectorAll("canvas");
+    const t = document.createElement("canvas");
+    t.width = b.width;
+    t.height = b.height;
+    const c = t.getContext("2d");
+    c.drawImage(b, 0, 0);
+    c.drawImage(o, 0, 0);
+    if (i) pdf.addPage();
     pdf.addImage(
-      img,
+      t.toDataURL("image/jpeg", 1),
       "JPEG",
       0,
       0,
