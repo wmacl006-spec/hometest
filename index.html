@@ -35,6 +35,10 @@
       height: 100vh;
       overflow: hidden;
     }
+    .host-only {
+  display: none;
+}
+
 
     /* ---------- Buttons & Inputs ---------- */
     button {
@@ -226,7 +230,7 @@
   document.getElementById('workspace').style.display = 'block';
   document.getElementById('roomLabel').innerText = roomCode;
 
-  // SHOW host-only controls
+  // SHOW host-only UI
   if (isHost) {
     document.querySelectorAll('.host-only').forEach(el => {
       el.style.display = 'inline-flex';
@@ -257,6 +261,7 @@
 
   onChildAdded(drawRef, snap => drawStroke(snap.val()));
 }
+
 
 
     const snap = await get(pdfRef);
