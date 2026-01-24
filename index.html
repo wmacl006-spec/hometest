@@ -405,6 +405,9 @@ const db = getDatabase(app);
 const storage = getStorage(app);
 
 /* ---------- STATE ---------- */
+
+let chatRef;
+
 let roomCode, isHost=false, pdfUrl;
 let tool="pen";
 let activeProfile=0;
@@ -455,7 +458,9 @@ async function start(){
   workspace.style.display="block";
   roomLabel.textContent=roomCode;
 
-  const chatRef = ref(db, `rooms/${roomCode}/chat`);
+  chatMessages.innerHTML = "";
+
+  chatRef = ref(db, `rooms/${roomCode}/chat`);
 
   if(isHost){
   toolbar.style.display = "flex";  // only host sees toolbar
@@ -688,20 +693,25 @@ window.downloadAnnotatedPDF = async () => {
 };
 
 function leaveRoom() {
-  // Reset state
+  if (chatRef) {
+    off(chatRef);
+    chatRef = null;
+  }
+
   roomCode = null;
   isHost = false;
   pdfUrl = null;
-  viewer.innerHTML = "";
 
-  // Hide workspace, show home
+  viewer.innerHTML = "";
+  chatMessages.innerHTML = "";
+
   workspace.style.display = "none";
   home.style.display = "flex";
 
-  // Show upload toolbar and toolbar for next host
   uploadControls.style.display = "flex";
   toolbar.style.display = "flex";
 }
+
 
   document.getElementById("leaveBtn").onclick = leaveRoom;
 
