@@ -1,13 +1,21 @@
 import { db } from "./firebase.js";
-import { doc, getDoc, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  doc,
+  getDoc,
+  collection,
+  onSnapshot,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const params = new URLSearchParams(window.location.search);
-const roomCode = params.get("room");
+const roomCode = new URLSearchParams(location.search).get("room");
 
 const pdfCanvas = document.getElementById("pdfCanvas");
 const drawCanvas = document.getElementById("drawCanvas");
 const pdfCtx = pdfCanvas.getContext("2d");
 const drawCtx = drawCanvas.getContext("2d");
+
+drawCanvas.style.pointerEvents = "none";
 
 // Load room
 const roomSnap = await getDoc(doc(db, "rooms", roomCode));
@@ -34,7 +42,7 @@ async function renderPDF(url) {
   }).promise;
 }
 
-// Listen for strokes
+// Live strokes
 const q = query(
   collection(db, "rooms", roomCode, "strokes"),
   orderBy("timestamp")
