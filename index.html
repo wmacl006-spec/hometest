@@ -299,12 +299,12 @@ input#joinInput:focus {
   display: flex;
   gap: 6px;
   padding: 6px 8px;
-  align-items: center;
 }
 
+
 #chatInputContainer input {
-  flex: 1;
-  padding: 6px;
+  flex: 1;           /* take up remaining space */
+  padding: 6px 8px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #111;
@@ -316,22 +316,24 @@ input#joinInput:focus {
 }
 
 #chatInputContainer button {
-  background: var(--accent);
-  border: none;
-  color: white;
-  height: 32px;
-  min-width: 32px;
-  padding: 0;
+  flex: 0 0 36px;    /* fixed width buttons */
+  height: 36px;      /* same height as input for alignment */
   border-radius: 8px;
+  border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  background: var(--accent);
+  color: white;
+  font-size: 1rem;   /* emoji friendly */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all var(--transition);
 }
 
 #chatInputContainer button:hover {
   background: var(--accent-hover);
-  transform: scale(1.05);
 }
+  
   #raiseHand {
   font-size: 1rem;
 }
@@ -775,7 +777,7 @@ function leaveRoom() {
 
 <!-- Chat Panel -->
 <div id="chatPanel">
-  <div id="chatHeader">💬 Chat</div>
+  <div id="chatHeader">Chat</div>
   <div id="chatMessages"></div>
 
   <input type="text" id="chatName" placeholder="Enter your name" />
