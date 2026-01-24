@@ -41,7 +41,7 @@ const penBtn = document.getElementById("penTool");
 const eraserBtn = document.getElementById("eraserTool");
 const colorPicker = document.getElementById("colorPicker");
 
-// ---------- GLOBAL DRAW STATE (THIS IS THE FIX) ----------
+// ---------- GLOBAL DRAW STATE ----------
 const drawState = {
   tool: "pen",
   color: "#b00b55"
@@ -53,6 +53,7 @@ let isTeacher = false;
 let pdfDoc = null;
 let unsubRoom = null;
 let unsubAnnotations = null;
+let annotationsLoaded = false;
 
 // ---------- UI ----------
 function enterRoomUI() {
@@ -74,7 +75,7 @@ function exitRoomUI() {
   toolbar.style.display = "none";
 }
 
-// ---------- TOOLS (NOW ACTUALLY WORK) ----------
+// ---------- Tools ----------
 penBtn.onclick = () => {
   drawState.tool = "pen";
   penBtn.classList.add("active");
@@ -87,9 +88,7 @@ eraserBtn.onclick = () => {
   penBtn.classList.remove("active");
 };
 
-colorPicker.oninput = e => {
-  drawState.color = e.target.value;
-};
+colorPicker.oninput = e => drawState.color = e.target.value;
 
 // ---------- Upload ----------
 uploadBtn.onclick = () => pdfUpload.click();
@@ -117,7 +116,7 @@ document.getElementById("joinRoom").onclick = async () => {
   const snap = await getDoc(doc(db, "rooms", roomId));
   if (snap.exists() && snap.data().pdfUrl) {
     await loadPDF(snap.data().pdfUrl);
-    await redrawAllAnnotations();
+    await loadAnnotationHistory(); // ✅ ONCE
   }
 
   listenRoom();
@@ -131,6 +130,7 @@ leaveBtn.onclick = () => {
 
   roomId = null;
   pdfDoc = null;
+  annotationsLoaded = false;
   viewer.innerHTML = "";
 
   exitRoomUI();
@@ -141,14 +141,14 @@ pdfUpload.onchange = async e => {
   if (!isTeacher) return;
 
   const file = e.target.files[0];
-  const refPdf = ref(storage, `pdfs/${roomId}.pdf`);
-  await uploadBytes(refPdf, file);
+  const pdfRef = ref(storage, `pdfs/${roomId}.pdf`);
+  await uploadBytes(pdfRef, file);
 
-  const url = await getDownloadURL(refPdf);
+  const url = await getDownloadURL(pdfRef);
   await updateDoc(doc(db, "rooms", roomId), { pdfUrl: url });
 
   await loadPDF(url);
-  await redrawAllAnnotations();
+  await loadAnnotationHistory();
   listenRoom();
   listenAnnotations();
 };
@@ -164,9 +164,18 @@ function listenRoom() {
 
 function listenAnnotations() {
   if (unsubAnnotations) unsubAnnotations();
+
   unsubAnnotations = onSnapshot(
     collection(db, "rooms", roomId, "annotations"),
-    redrawAllAnnotations
+    snap => {
+      if (!annotationsLoaded) return;
+
+      snap.docChanges().forEach(change => {
+        if (change.type === "added") {
+          drawAnnotation(change.doc.data());
+        }
+      });
+    }
   );
 }
 
@@ -200,7 +209,7 @@ async function loadPDF(url) {
   }
 }
 
-// ---------- DRAWING (READS drawState LIVE) ----------
+// ---------- Drawing ----------
 function setupDrawing(canvas, page) {
   if (!isTeacher) return;
 
@@ -260,15 +269,9 @@ function setupDrawing(canvas, page) {
   };
 }
 
-// ---------- REDRAW ALL (PAST + LIVE) ----------
-async function redrawAllAnnotations() {
-  if (!roomId) return;
-
-  // clear overlays
-  [...viewer.children].forEach(p => {
-    const c = p.querySelector(".overlay");
-    c.getContext("2d").clearRect(0, 0, c.width, c.height);
-  });
+// ---------- Load annotation history (ONCE) ----------
+async function loadAnnotationHistory() {
+  annotationsLoaded = false;
 
   const q = query(
     collection(db, "rooms", roomId, "annotations"),
@@ -277,9 +280,11 @@ async function redrawAllAnnotations() {
 
   const snap = await getDocs(q);
   snap.forEach(d => drawAnnotation(d.data()));
+
+  annotationsLoaded = true;
 }
 
-// ---------- DRAW ----------
+// ---------- Draw ----------
 function drawAnnotation(a) {
   const pageDiv = viewer.children[a.page - 1];
   if (!pageDiv) return;
