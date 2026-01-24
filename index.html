@@ -4,14 +4,12 @@
   <meta charset="UTF-8" />
   <title>Live PDF Draw</title>
 
-  <!-- ✅ PDF.js LEGACY (this exposes window.pdfjsLib) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/legacy/build/pdf.min.js"></script>
-
   <style>
     body {
       margin: 0;
       background: #111;
       color: #eee;
+      font-family: Arial, sans-serif;
       font-family: Arial, sans-serif;
     }
 
@@ -35,16 +33,15 @@
       margin-bottom: 20px;
     }
 
-    .page canvas {
+    canvas {
       display: block;
       margin: 0 auto;
     }
 
     .draw-layer {
       position: absolute;
-      left: 0;
       top: 0;
-      pointer-events: auto;
+      left: 0;
     }
   </style>
 </head>
@@ -57,6 +54,7 @@
 
   <div id="viewer"></div>
 
+  <!-- ONE module, everything imported cleanly -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>
