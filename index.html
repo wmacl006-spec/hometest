@@ -16,19 +16,21 @@
       padding: 10px;
       background: #181818;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
-    input, button {
+    button, input {
       background: #222;
       color: #eee;
       border: 1px solid #444;
       padding: 6px 10px;
+      cursor: pointer;
     }
 
     #viewer {
-      height: calc(100vh - 60px);
+      height: calc(100vh - 70px);
       overflow-y: auto;
       padding: 20px;
     }
@@ -39,34 +41,38 @@
     }
 
     canvas {
-  border: 1px solid #444;
-}
+      display: block;
+      margin: 0 auto;
+      border: 1px solid #444;
+    }
 
-.page canvas:first-child {
-  background: #222; /* PDF canvas only */
-}
-
-.overlay {
-  background: transparent;
-}
-
+    .page canvas:first-child {
+      background: #222;
+    }
 
     .overlay {
       position: absolute;
       left: 0;
       top: 0;
-      pointer-events: none;
+      background: transparent;
     }
   </style>
+
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
 <header>
-  <button id="createRoom">Create Room (Teacher)</button>
+  <button id="createRoom">Create Room</button>
   <input id="roomInput" placeholder="Room code" />
-  <button id="joinRoom">Join Room</button>
+  <button id="joinRoom">Join</button>
 
   <input type="file" id="pdfUpload" accept="application/pdf" />
+
+  <button id="downloadPdf">Download PDF</button>
+  <button id="leaveRoom">Leave</button>
+
   <span id="roomLabel"></span>
 </header>
 
