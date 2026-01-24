@@ -1,5 +1,5 @@
-// ✅ PDF.js now exists
-const pdfjsLib = window.pdfjsLib;
+// --- PDF.js ES MODULE (NO GLOBALS) ---
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/legacy/build/pdf.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/legacy/build/pdf.worker.min.js";
@@ -19,7 +19,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// --- Config ---
+// --- Firebase config ---
 const firebaseConfig = {
   apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain: "teampdf-7ec12.firebaseapp.com",
@@ -54,11 +54,10 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
 // --- Live updates ---
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
-  const { pdfUrl } = snap.data();
-  await loadPDF(pdfUrl);
+  await loadPDF(snap.data().pdfUrl);
 });
 
-// --- Render all pages ---
+// --- Load & render PDF ---
 async function loadPDF(url) {
   viewer.innerHTML = "";
 
@@ -70,8 +69,8 @@ async function loadPDF(url) {
   }
 }
 
-async function renderPage(pageNumber) {
-  const page = await pdfDoc.getPage(pageNumber);
+async function renderPage(num) {
+  const page = await pdfDoc.getPage(num);
   const viewport = page.getViewport({ scale: 1.4 });
 
   const pageDiv = document.createElement("div");
@@ -113,19 +112,18 @@ function enableDrawing(canvas) {
   ctx.lineWidth = 2;
   ctx.lineCap = "round";
 
-  canvas.addEventListener("mousedown", (e) => {
+  canvas.addEventListener("mousedown", e => {
     drawing = true;
-    const rect = canvas.getBoundingClientRect();
-    lastX = e.clientX - rect.left;
-    lastY = e.clientY - rect.top;
+    const r = canvas.getBoundingClientRect();
+    lastX = e.clientX - r.left;
+    lastY = e.clientY - r.top;
   });
 
-  canvas.addEventListener("mousemove", (e) => {
+  canvas.addEventListener("mousemove", e => {
     if (!drawing) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
 
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
