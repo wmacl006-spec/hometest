@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Host</title>
@@ -7,48 +7,59 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
-  body {
-    margin: 0;
-    background: #0f0f0f;
-    color: #eee;
-    font-family: system-ui, sans-serif;
-  }
+body {
+  margin: 0;
+  background: #0f0f0f;
+  font-family: system-ui, sans-serif;
+  color: #eee;
+}
 
-  header {
-    height: 56px;
-    background: #181818;
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    gap: 12px;
-    border-bottom: 1px solid #222;
-  }
+header {
+  height: 56px;
+  background: #181818;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  border-bottom: 1px solid #222;
+}
 
-  header span {
-    color: #b00b55;
-    font-weight: 600;
-  }
+header span {
+  color: #b00b55;
+  font-weight: 600;
+}
 
-  main {
-    display: flex;
-    justify-content: center;
-    padding: 12px;
-  }
+main {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+}
 
-  #stage {
-    position: relative;
-  }
+#stage {
+  position: relative;
+}
 
-  canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  input[type=file] {
-    color: #ccc;
-  }
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 </style>
+</head>
+
+<body>
+<header>
+  <span>Host</span>
+  <div>Room: <b id="roomLabel"></b></div>
+  <input type="file" id="pdfInput" accept="application/pdf">
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="pdf"></canvas>
+    <canvas id="draw"></canvas>
+  </div>
+</main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -71,6 +82,9 @@ const storage = getStorage(app);
 signInAnonymously(getAuth(app));
 
 const room = new URLSearchParams(location.search).get("room");
+roomLabel.textContent = room;
+
+await setDoc(doc(db, "rooms", room), { created: Date.now() });
 
 const pdfCanvas = document.getElementById("pdf");
 const drawCanvas = document.getElementById("draw");
@@ -79,12 +93,13 @@ const ctx = drawCanvas.getContext("2d");
 
 ctx.lineCap = "round";
 ctx.lineJoin = "round";
-ctx.strokeStyle = "#b00b55";
-ctx.lineWidth = 3;
 
-await setDoc(doc(db, "rooms", room), { created: Date.now() });
+let strokes = [];
+let activeStroke = [];
+let drawing = false;
+let needsRender = true;
 
-/* ---------- PDF ---------- */
+/* PDF */
 pdfInput.onchange = async e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -105,65 +120,62 @@ async function renderPDF(url) {
   pdfCanvas.height = drawCanvas.height = vp.height;
 
   await page.render({ canvasContext: pdfCtx, viewport: vp }).promise;
+  needsRender = true;
 }
 
-/* ---------- DRAWING (REAL FIX) ---------- */
-let drawing = false;
-let points = [];
-let needsRender = false;
-
+/* Drawing */
 drawCanvas.addEventListener("pointerdown", e => {
   drawing = true;
-  points = [[e.offsetX, e.offsetY]];
+  activeStroke = [[e.offsetX, e.offsetY]];
   drawCanvas.setPointerCapture(e.pointerId);
+  needsRender = true;
 });
 
 drawCanvas.addEventListener("pointermove", e => {
   if (!drawing) return;
-  points.push([e.offsetX, e.offsetY]);
+  activeStroke.push([e.offsetX, e.offsetY]);
   needsRender = true;
 });
 
 drawCanvas.addEventListener("pointerup", async () => {
   drawing = false;
-  await addDoc(collection(db, "rooms", room, "strokes"), {
-    points,
+
+  const stroke = {
+    points: activeStroke,
     color: "#b00b55",
     width: 3,
     ts: Date.now()
-  });
+  };
+
+  strokes.push(stroke);
+  activeStroke = [];
+
+  await addDoc(collection(db, "rooms", room, "strokes"), stroke);
+  needsRender = true;
 });
+
+function drawStroke(s) {
+  ctx.strokeStyle = s.color;
+  ctx.lineWidth = s.width;
+  ctx.beginPath();
+  s.points.forEach(([x,y], i) =>
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)
+  );
+  ctx.stroke();
+}
 
 function render() {
   if (needsRender) {
     ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-    ctx.beginPath();
-    points.forEach(([x,y], i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
-    ctx.stroke();
+    strokes.forEach(drawStroke);
+    if (activeStroke.length > 1) {
+      drawStroke({ points: activeStroke, color:"#b00b55", width:3 });
+    }
     needsRender = false;
   }
   requestAnimationFrame(render);
 }
 render();
-</script>
-</head>
-
-<body>
-<header>
-  <span>Host</span>
-  <div>Room: <b id="r"></b></div>
-  <input type="file" id="pdfInput" accept="application/pdf">
-</header>
-
-<main>
-  <div id="stage">
-    <canvas id="pdf"></canvas>
-    <canvas id="draw"></canvas>
-  </div>
-</main>
-
-<script>
-  r.textContent = new URLSearchParams(location.search).get("room");
 </script>
 </body>
 </html>
