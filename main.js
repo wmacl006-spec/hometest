@@ -1,4 +1,4 @@
-// ---------------- PDF.js (MODULE IMPORT — FIX) ----------------
+// ---------------- PDF.js ----------------
 import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -10,7 +10,8 @@ import {
   getFirestore,
   doc,
   setDoc,
-  onSnapshot
+  onSnapshot,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
   getStorage,
@@ -34,22 +35,20 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ---------------- PDF state ----------------
+// ---------------- State ----------------
 let pdfDoc = null;
+let currentPage = 1;
+let totalPages = 1;
 
-// ---------------- Upload handler ----------------
+// ---------------- Upload ----------------
 document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-
-  console.log("Uploading PDF…");
 
   const storageRef = ref(storage, "pdfs/shared.pdf");
   await uploadBytes(storageRef, file);
 
   const url = await getDownloadURL(storageRef);
-
-  console.log("Upload complete, broadcasting");
 
   await setDoc(doc(db, "session", "current"), {
     pdfUrl: url,
@@ -58,20 +57,48 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   });
 });
 
-// ---------------- Live listener ----------------
+// ---------------- Live sync ----------------
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
 
-  const { pdfUrl, page } = snap.data();
-  console.log("PDF update received");
+  const data = snap.data();
 
-  await loadPDF(pdfUrl, page);
+  if (!pdfDoc || data.pdfUrl !== pdfDoc._url) {
+    await loadPDF(data.pdfUrl);
+  }
+
+  if (data.page !== currentPage) {
+    currentPage = data.page;
+    renderPage(currentPage);
+  }
 });
 
-// ---------------- Render ----------------
-async function loadPDF(url, pageNumber) {
-  pdfDoc = await pdfjsLib.getDocument(url).promise;
-  await renderPage(pageNumber);
+// ---------------- Navigation ----------------
+document.getElementById("nextPage").onclick = async () => {
+  if (currentPage >= totalPages) return;
+
+  await updateDoc(doc(db, "session", "current"), {
+    page: currentPage + 1
+  });
+};
+
+document.getElementById("prevPage").onclick = async () => {
+  if (currentPage <= 1) return;
+
+  await updateDoc(doc(db, "session", "current"), {
+    page: currentPage - 1
+  });
+};
+
+// ---------------- PDF rendering ----------------
+async function loadPDF(url) {
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+
+  pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
+  totalPages = pdfDoc.numPages;
+
+  renderPage(1);
 }
 
 async function renderPage(pageNumber) {
@@ -83,6 +110,9 @@ async function renderPage(pageNumber) {
 
   canvas.width = viewport.width;
   canvas.height = viewport.height;
+
+  document.getElementById("pageInfo").textContent =
+    `Page ${pageNumber} / ${totalPages}`;
 
   await page.render({
     canvasContext: ctx,
