@@ -82,22 +82,18 @@
 
     header .left, header .right { display: flex; gap: 12px; align-items: center; }
 
-    /* IMPORTANT: vertical scroll */
     #viewer {
       height: calc(100vh - 64px);
       overflow-y: auto;
       overflow-x: hidden;
       padding: 24px 0;
       display: flex;
-      flex-direction: column; /* vertical stacking */
+      flex-direction: column;
       align-items: center;
       gap: 32px;
     }
 
-    .page {
-      position: relative;
-    }
-
+    .page { position: relative; }
     canvas { display: block; }
 
     .room-code { color: var(--accent); font-weight: 700; }
@@ -134,8 +130,10 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
   import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
@@ -178,18 +176,20 @@
     if (isHost) {
       document.getElementById('pdfUpload').onchange = async e => {
         const file = e.target.files[0];
+        if (!file) return;
         const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
         await uploadBytes(fileRef, file);
         const url = await getDownloadURL(fileRef);
-        await fetch(pdfRef.toString(), { method: 'PUT', body: JSON.stringify(url) });
-        renderPDF(url);
+        await set(pdfRef, url);
+        await renderPDF(url);
       };
     }
 
     const snap = await get(pdfRef);
-    if (snap.exists()) await renderPDF(snap.val());
+    if (snap.exists()) {
+      await renderPDF(snap.val());
+    }
 
-    /* Draw ALL previous strokes + future ones */
     onChildAdded(drawRef, snap => {
       const { page, x1, y1, x2, y2 } = snap.val();
       const canvas = document.getElementById(`draw-${page}`);
@@ -226,8 +226,8 @@
 
       drawCanvas.id = `draw-${i}`;
       drawCanvas.style.position = 'absolute';
-      drawCanvas.style.top = 0;
-      drawCanvas.style.left = 0;
+      drawCanvas.style.top = '0';
+      drawCanvas.style.left = '0';
 
       wrapper.appendChild(pdfCanvas);
       wrapper.appendChild(drawCanvas);
@@ -240,7 +240,6 @@
   }
 
   function enableDrawing(canvas, page) {
-    const ctx = canvas.getContext('2d');
     let drawing = false;
     let lastX, lastY;
     const drawRef = ref(db, `rooms/${roomCode}/draw`);
@@ -253,6 +252,7 @@
     };
 
     canvas.onmouseup = () => drawing = false;
+    canvas.onmouseleave = () => drawing = false;
 
     canvas.onmousemove = e => {
       if (!drawing) return;
