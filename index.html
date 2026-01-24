@@ -106,6 +106,47 @@ header {
   font-weight:700;
 }
 
+  .modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.modal.hidden { display:none; }
+
+.modal-card {
+  background:var(--panel);
+  padding:24px;
+  border-radius:16px;
+  width:300px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.bind {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.bind input {
+  width:90px;
+  background:#111;
+  border:1px solid var(--border);
+  color:white;
+  padding:6px 8px;
+  border-radius:8px;
+  text-align:center;
+  cursor:pointer;
+}
+
+
 input[type=color] {
   width:34px;
   height:34px;
@@ -187,6 +228,7 @@ button.secondary {
     <div class="tool color" data-index="2"></div>
     <div class="tool eraser">[ ]</div>
     <input type="color" id="colorPicker" />
+    <div class="tool" id="settingsBtn">⚙️</div>
   </div>
   <input type="range" id="sizeSlider" min="1" max="20" value="3" />
 </div>
@@ -357,6 +399,54 @@ function enableDrawing(c,page){
   };
 }
 
+  /* ---------- KEYBINDS ---------- */
+const defaultBinds = {
+  color0: "1",
+  color1: "2",
+  color2: "3",
+  eraser: "e"
+};
+
+let keybinds = JSON.parse(localStorage.getItem("keybinds")) || defaultBinds;
+
+const modal = document.getElementById("settingsModal");
+const inputs = modal.querySelectorAll("input");
+
+inputs.forEach(input => {
+  const key = input.dataset.bind;
+  input.value = keybinds[key];
+
+  input.onfocus = () => input.value = "Press key";
+  input.onkeydown = e => {
+    e.preventDefault();
+    keybinds[key] = e.key;
+    input.value = e.key;
+    localStorage.setItem("keybinds", JSON.stringify(keybinds));
+    input.blur();
+  };
+});
+
+settingsBtn.onclick = () => modal.classList.remove("hidden");
+window.closeSettings = () => modal.classList.add("hidden");
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+
+  if (e.key === keybinds.color0) {
+    tool = "pen"; activeProfile = 0; updateToolbar();
+  }
+  if (e.key === keybinds.color1) {
+    tool = "pen"; activeProfile = 1; updateToolbar();
+  }
+  if (e.key === keybinds.color2) {
+    tool = "pen"; activeProfile = 2; updateToolbar();
+  }
+  if (e.key === keybinds.eraser) {
+    tool = "eraser"; updateToolbar();
+  }
+});
+
+
 /* ---------- EXPORT ---------- */
 window.downloadAnnotatedPDF = async () => {
   if (!pdfUrl) return;
@@ -398,5 +488,32 @@ window.downloadAnnotatedPDF = async () => {
 };
 
 </script>
+
+  <div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>Keybinds</h3>
+
+    <div class="bind">
+      <span>Color 1</span>
+      <input data-bind="color0" readonly />
+    </div>
+    <div class="bind">
+      <span>Color 2</span>
+      <input data-bind="color1" readonly />
+    </div>
+    <div class="bind">
+      <span>Color 3</span>
+      <input data-bind="color2" readonly />
+    </div>
+    <div class="bind">
+      <span>Eraser</span>
+      <input data-bind="eraser" readonly />
+    </div>
+
+    <button class="secondary" onclick="closeSettings()">Close</button>
+  </div>
+</div>
+
+  
 </body>
 </html>
