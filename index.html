@@ -539,6 +539,18 @@ chatSend.onclick = () => {
   chatInput.value = "";
 };
 
+  // Raise hand button
+raiseHand.onclick = () => {
+  const name = chatName.value.trim();
+  if (!name || !chatRef) return;
+
+  push(chatRef, {
+    name: "✋",
+    msg: `${name} has a question`
+  });
+};
+
+
 // Listen for messages
 onChildAdded(chatRef, snapshot => {
   const data = snapshot.val();
