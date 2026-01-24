@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live PDF Viewer</title>
+  <title>Live Classroom PDF</title>
 
   <style>
     body {
@@ -14,36 +14,58 @@
 
     header {
       padding: 10px;
-      text-align: center;
       background: #181818;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input, button {
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      padding: 6px 10px;
     }
 
     #viewer {
-      height: calc(100vh - 70px);
+      height: calc(100vh - 60px);
       overflow-y: auto;
       padding: 20px;
     }
 
+    .page {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
     canvas {
       display: block;
-      margin: 0 auto 20px auto;
+      margin: 0 auto;
       background: #222;
       border: 1px solid #444;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h3>📄 Live PDF Viewer</h3>
-    <input type="file" id="pdfUpload" accept="application/pdf" />
-  </header>
+<header>
+  <button id="createRoom">Create Room (Teacher)</button>
+  <input id="roomInput" placeholder="Room code" />
+  <button id="joinRoom">Join Room</button>
 
-  <div id="viewer"></div>
+  <input type="file" id="pdfUpload" accept="application/pdf" />
+  <span id="roomLabel"></span>
+</header>
 
-  <script type="module" src="./main.js"></script>
+<div id="viewer"></div>
+
+<script type="module" src="./main.js"></script>
 </body>
 </html>
