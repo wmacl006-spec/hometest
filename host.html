@@ -1,21 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <title>Host</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-body { margin:0; background:#0f0f0f; color:#eee; font-family:system-ui; }
+body {
+  margin:0;
+  background:#0f0f0f;
+  color:#eee;
+  font-family:system-ui;
+}
 header {
-  height:56px; background:#181818;
-  display:flex; align-items:center; gap:16px;
-  padding:0 16px; border-bottom:1px solid #222;
+  height:56px;
+  background:#181818;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:0 16px;
+  border-bottom:1px solid #222;
 }
 header span { color:#b00b55; font-weight:600; }
-#pages { display:flex; flex-direction:column; gap:24px; padding:24px; }
-.page { position:relative; margin:auto; }
+#pages {
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:32px;
+}
+.page {
+  position:relative;
+  margin:auto;
+}
 .draw {
-  position:absolute; top:0; left:0;
+  position:absolute;
+  top:0;
+  left:0;
 }
 </style>
 </head>
@@ -31,8 +50,13 @@ header span { color:#b00b55; font-weight:600; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import {
+  getFirestore, doc, setDoc, updateDoc,
+  collection, addDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -55,6 +79,13 @@ roomLabel.textContent = room;
 await setDoc(doc(db, "rooms", room), { created: Date.now() });
 
 const pagesEl = document.getElementById("pages");
+const pageCtx = {};
+let strokes = [];
+
+onSnapshot(collection(db, "rooms", room, "strokes"), snap => {
+  strokes = snap.docs.map(d => d.data());
+  redrawAll();
+});
 
 pdfInput.onchange = async e => {
   const file = e.target.files[0];
@@ -65,13 +96,15 @@ pdfInput.onchange = async e => {
   renderPDF(url);
 };
 
-async function renderPDF(url) {
+async function renderPDF(url){
   pagesEl.innerHTML = "";
+  pageCtx.clear?.();
+
   const pdf = await pdfjsLib.getDocument(url).promise;
 
-  for (let p = 1; p <= pdf.numPages; p++) {
+  for(let p=1;p<=pdf.numPages;p++){
     const page = await pdf.getPage(p);
-    const vp = page.getViewport({ scale: 1.5 });
+    const vp = page.getViewport({scale:1.5});
 
     const wrap = document.createElement("div");
     wrap.className = "page";
@@ -91,11 +124,14 @@ async function renderPDF(url) {
       viewport: vp
     }).promise;
 
+    pageCtx[p] = drawC.getContext("2d");
     setupDrawing(drawC, p);
   }
+
+  redrawAll();
 }
 
-function setupDrawing(canvas, page) {
+function setupDrawing(canvas, page){
   const ctx = canvas.getContext("2d");
   ctx.lineCap = ctx.lineJoin = "round";
 
@@ -108,35 +144,50 @@ function setupDrawing(canvas, page) {
   });
 
   canvas.addEventListener("pointermove", e => {
-    if (!drawing) return;
+    if(!drawing) return;
     points.push([e.offsetX, e.offsetY]);
-    redraw();
+    redrawAll(points, page);
   });
 
   canvas.addEventListener("pointerup", async () => {
     drawing = false;
-    redraw();
 
-    await addDoc(collection(db, "rooms", room, "strokes"), {
+    const stroke = {
       page,
       points,
-      color: "#b00b55",
-      width: 3,
-      ts: Date.now()
-    });
+      color:"#b00b55",
+      width:3,
+      ts:Date.now()
+    };
 
     points = [];
+    await addDoc(collection(db,"rooms",room,"strokes"), stroke);
+  });
+}
+
+function redrawAll(activePoints=null, activePage=null){
+  Object.values(pageCtx).forEach(ctx=>{
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
   });
 
-  function redraw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    if (!points.length) return;
-    ctx.strokeStyle = "#b00b55";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
-    ctx.stroke();
+  strokes.forEach(s=>{
+    const ctx = pageCtx[s.page];
+    if(!ctx) return;
+    drawStroke(ctx, s.points, s.color, s.width);
+  });
+
+  if(activePoints && activePage){
+    drawStroke(pageCtx[activePage], activePoints, "#b00b55", 3);
   }
+}
+
+function drawStroke(ctx, pts, color, width){
+  if(pts.length<2) return;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+  ctx.stroke();
 }
 </script>
 </body>
