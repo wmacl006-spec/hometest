@@ -255,7 +255,7 @@ input#joinInput:focus {
   bottom: 24px;
   left: 24px;
   width: 260px;
-  max-height: 400px;
+  height: 320px;          /* fixed height */
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -265,7 +265,10 @@ input#joinInput:focus {
   font-size: 0.9rem;
   overflow: hidden;
   z-index: 1000;
+  display: none;           /* hidden by default */
 }
+
+
 
 #chatHeader {
   background: var(--accent);
@@ -281,6 +284,7 @@ input#joinInput:focus {
   padding: 8px;
   overflow-y: auto;
   background: #111;
+  word-break: break-word;  /* prevent long messages from overflowing */
 }
 
 .chatMessage {
@@ -451,6 +455,11 @@ async function start(){
   toolbar.style.display = "none";        // hide toolbar for them
 }
 
+  // Show chat only when in a room
+const chatPanel = document.getElementById("chatPanel");
+chatPanel.style.display = "flex";
+
+
 
   const pdfRef=ref(db,`rooms/${roomCode}/pdf`);
   const drawRef=ref(db,`rooms/${roomCode}/draw`);
@@ -603,14 +612,14 @@ document.addEventListener("keydown", e => {
 });
 
 
-  const chatRef = ref(db, `rooms/${roomCode}/chat`);
+const chatRef = ref(db, `rooms/${roomCode}/chat`);
 
 const chatMessages = document.getElementById("chatMessages");
 const chatName = document.getElementById("chatName");
 const chatInput = document.getElementById("chatInput");
 const chatSend = document.getElementById("chatSend");
 
-// Enable message sending once name is entered
+// Enable input when name is entered
 chatName.addEventListener("input", () => {
   const name = chatName.value.trim();
   chatInput.disabled = !name;
@@ -635,8 +644,6 @@ onChildAdded(chatRef, snapshot => {
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
-
-
 
 /* ---------- EXPORT ---------- */
 window.downloadAnnotatedPDF = async () => {
