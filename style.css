@@ -1,0 +1,25 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+header {
+  padding: 8px;
+  background: #222;
+  color: white;
+  display: flex;
+  gap: 12px;
+}
+
+#viewer {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 48px);
+  background: #333;
+}
+
+canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
