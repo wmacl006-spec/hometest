@@ -255,7 +255,7 @@ input#joinInput:focus {
   bottom: 24px;
   left: 24px;
   width: 260px;
-  height: 320px;          /* fixed height */
+  height: 400px;         /* increased height so inputs fit */
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -265,7 +265,7 @@ input#joinInput:focus {
   font-size: 0.9rem;
   overflow: hidden;
   z-index: 1000;
-  display: none;           /* hidden by default */
+  display: none;          /* hidden by default until joining/hosting */
 }
 
 
@@ -282,9 +282,9 @@ input#joinInput:focus {
 #chatMessages {
   flex: 1;
   padding: 8px;
-  overflow-y: auto;
+  overflow-y: auto;       /* scrollable area */
   background: #111;
-  word-break: break-word;  /* prevent long messages from overflowing */
+  word-break: break-word;
 }
 
 .chatMessage {
@@ -301,6 +301,7 @@ input#joinInput:focus {
   padding: 6px 8px;
   border-top: 1px solid var(--border);
   background: #16161c;
+  flex-shrink: 0;         /* prevents shrinking when panel resizes */
 }
 
 #chatInputContainer input {
@@ -455,7 +456,7 @@ async function start(){
   toolbar.style.display = "none";        // hide toolbar for them
 }
 
-  // Show chat only when in a room
+// Show chat only after joining or hosting
 const chatPanel = document.getElementById("chatPanel");
 chatPanel.style.display = "flex";
 
