@@ -42,6 +42,9 @@ const eraserBtn = document.getElementById("eraserTool");
 const colorPicker = document.getElementById("colorPicker");
 const eraserCursor = document.getElementById("eraserCursor");
 
+const downloadBtn = document.getElementById("downloadPdf");
+
+
 // ---------- GLOBAL DRAW STATE ----------
 const drawState = {
   tool: "pen",
@@ -325,3 +328,36 @@ function drawAnnotation(a) {
   ctx.stroke();
   ctx.globalCompositeOperation = "source-over";
 }
+
+downloadBtn.onclick = async () => {
+  if (!pdfDoc) return;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: "px" });
+
+  const pages = viewer.querySelectorAll(".page");
+
+  for (let i = 0; i < pages.length; i++) {
+    const base = pages[i].children[0];
+    const overlay = pages[i].children[1];
+
+    // Merge canvases
+    const merged = document.createElement("canvas");
+    merged.width = base.width;
+    merged.height = base.height;
+
+    const ctx = merged.getContext("2d");
+    ctx.drawImage(base, 0, 0);
+    ctx.drawImage(overlay, 0, 0);
+
+    const img = merged.toDataURL("image/png");
+
+    if (i > 0) pdf.addPage([merged.width, merged.height]);
+    pdf.addImage(img, "PNG", 0, 0, merged.width, merged.height);
+  }
+
+  pdf.save(`room-${roomId}.pdf`);
+};
+
+
+
