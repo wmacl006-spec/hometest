@@ -1,14 +1,26 @@
-import { auth, db, storage } from "./firebase.js";
-import { doc, setDoc, updateDoc, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { db, storage } from "./firebase.js";
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  collection,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-const params = new URLSearchParams(window.location.search);
-const roomCode = params.get("room");
+const roomCode = new URLSearchParams(location.search).get("room");
 
 const pdfCanvas = document.getElementById("pdfCanvas");
 const drawCanvas = document.getElementById("drawCanvas");
 const pdfCtx = pdfCanvas.getContext("2d");
 const drawCtx = drawCanvas.getContext("2d");
+
+drawCtx.lineCap = "round";
+drawCtx.lineJoin = "round";
 
 let drawing = false;
 let lastX = 0;
@@ -20,7 +32,7 @@ await setDoc(doc(db, "rooms", roomCode), {
 });
 
 // Upload PDF
-document.getElementById("pdfInput").addEventListener("change", async (e) => {
+pdfInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
