@@ -1,33 +1,39 @@
-/* ---------- Firebase ---------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+/* ================= FIREBASE (CDN ONLY) ================= */
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
 import {
   getFirestore, doc, setDoc, getDoc,
   collection, addDoc, onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 import {
   getStorage, ref, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-/* 🔴 REPLACE WITH YOUR REAL CONFIG */
+/* 🔥 YOUR REAL CONFIG (CORRECTED) */
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_ID",
-  storageBucket: "YOUR_BUCKET",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
+  apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
+  authDomain: "teampdf-7ec12.firebaseapp.com",
+  databaseURL: "https://teampdf-7ec12-default-rtdb.firebaseio.com",
+  projectId: "teampdf-7ec12",
+  storageBucket: "teampdf-7ec12.appspot.com",
+  messagingSenderId: "307072046237",
+  appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* ---------- PDF.js ---------- */
-import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
+/* ================= PDF.JS ================= */
+import * as pdfjsLib from
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
+
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
 
-/* ---------- DOM ---------- */
+/* ================= DOM ================= */
 const viewer = document.getElementById("viewer");
 const lobby = document.getElementById("lobby");
 const roomLabel = document.getElementById("roomLabel");
@@ -38,13 +44,13 @@ const toolbar = document.getElementById("toolbar");
 const penBtn = document.getElementById("pen");
 const eraserBtn = document.getElementById("eraser");
 
-/* ---------- State ---------- */
+/* ================= STATE ================= */
 let roomId = null;
 let isTeacher = false;
 let pdfLoaded = false;
 let tool = "pen";
 
-/* ---------- Room Logic ---------- */
+/* ================= ROOMS ================= */
 async function createRoom(){
   roomId = Math.random().toString(36).slice(2,8);
   isTeacher = true;
@@ -82,7 +88,7 @@ function enterRoom(){
   listenAnnotations();
 }
 
-/* ---------- PDF ---------- */
+/* ================= PDF UPLOAD ================= */
 uploadBtn.onclick = ()=> pdfUpload.click();
 
 pdfUpload.onchange = async e=>{
@@ -94,7 +100,7 @@ pdfUpload.onchange = async e=>{
   const url = await getDownloadURL(r);
 
   await setDoc(doc(db,"rooms",roomId),{
-    pdfUrl:url
+    pdfUrl: url
   },{merge:true});
 };
 
@@ -127,12 +133,12 @@ async function loadPDF(url){
   pdfLoaded = true;
 }
 
-/* ---------- Firestore Listeners ---------- */
+/* ================= LISTENERS ================= */
 function listenRoom(){
   onSnapshot(doc(db,"rooms",roomId),snap=>{
-    const data = snap.data();
-    if(data?.pdfUrl && !pdfLoaded){
-      loadPDF(data.pdfUrl);
+    const d = snap.data();
+    if(d?.pdfUrl && !pdfLoaded){
+      loadPDF(d.pdfUrl);
     }
   });
 }
@@ -150,7 +156,7 @@ function listenAnnotations(){
   });
 }
 
-/* ---------- Drawing ---------- */
+/* ================= DRAWING ================= */
 penBtn.onclick = ()=> tool="pen";
 eraserBtn.onclick = ()=> tool="eraser";
 
@@ -158,13 +164,13 @@ function enableDraw(canvas,page){
   const ctx = canvas.getContext("2d");
   let drawing=false,last=null;
 
-  canvas.onpointerdown=e=>{
+  canvas.onpointerdown = e=>{
     if(!isTeacher) return;
     drawing=true;
     last=[e.offsetX,e.offsetY];
   };
 
-  canvas.onpointermove=e=>{
+  canvas.onpointermove = e=>{
     if(!drawing) return;
     const cur=[e.offsetX,e.offsetY];
     drawLine(ctx,last,cur,tool);
@@ -172,7 +178,7 @@ function enableDraw(canvas,page){
     last=cur;
   };
 
-  window.onpointerup=()=>drawing=false;
+  window.onpointerup = ()=> drawing=false;
 }
 
 function drawLine(ctx,a,b,tool){
@@ -189,10 +195,10 @@ function drawLine(ctx,a,b,tool){
 async function saveAnnotation(page,a,b,tool){
   await addDoc(collection(db,"rooms",roomId,"annotations"),{
     page,
-    x0:a[0],y0:a[1],
-    x1:b[0],y1:b[1],
+    x0:a[0], y0:a[1],
+    x1:b[0], y1:b[1],
     tool,
-    createdAt:serverTimestamp()
+    createdAt: serverTimestamp()
   });
 }
 
@@ -202,6 +208,6 @@ function drawRemote(d){
   drawLine(c.getContext("2d"),[d.x0,d.y0],[d.x1,d.y1],d.tool);
 }
 
-/* ---------- Bind ---------- */
+/* ================= BIND ================= */
 document.getElementById("createRoom").onclick = createRoom;
 document.getElementById("joinRoom").onclick = joinRoom;
