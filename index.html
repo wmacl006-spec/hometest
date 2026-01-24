@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <title>Live PDF Viewer</title>
 
-  <!-- PDF.js (UMD build exposes pdfjsLib on window) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
-
   <style>
     body {
       margin: 0;
@@ -38,7 +35,7 @@
 
   <canvas id="pdfCanvas"></canvas>
 
-  <!-- Your app -->
+  <!-- ONLY load your module -->
   <script type="module" src="./main.js"></script>
 
 </body>
