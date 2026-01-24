@@ -1,7 +1,10 @@
-/* ---------------- FIREBASE ---------------- */
+/* ===================== FIREBASE ===================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
-import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
+import { getDatabase, ref, push, onChildAdded, onValue, set } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUQgksDWqis5CYkivxYnQTHY9GHiSR8SA",
@@ -15,11 +18,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db = getDatabase(app)
+const storage = getStorage(app)
 
-/* change this to create separate sessions */
-const ROOM = "default-room"
+/* ===================== ROOM ===================== */
 
-/* ---------------- PDF ---------------- */
+const ROOM =
+  new URLSearchParams(location.search).get("room") || "default"
+
+/* ===================== DOM ===================== */
 
 const pdfInput = document.getElementById("pdfInput")
 const pdfCanvas = document.getElementById("pdfCanvas")
@@ -31,14 +37,32 @@ const status = document.getElementById("status")
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
 
+/* ===================== PDF UPLOAD ===================== */
+
 pdfInput.addEventListener("change", async e => {
   const file = e.target.files[0]
   if (!file) return
 
+  status.textContent = "Uploading PDF…"
+
+  const pdfRef = sRef(storage, `rooms/${ROOM}/document.pdf`)
+  await uploadBytes(pdfRef, file)
+
+  const url = await getDownloadURL(pdfRef)
+  await set(ref(db, `rooms/${ROOM}/pdfUrl`), url)
+
+  status.textContent = "PDF synced"
+})
+
+/* ===================== PDF SYNC ===================== */
+
+onValue(ref(db, `rooms/${ROOM}/pdfUrl`), async snap => {
+  const url = snap.val()
+  if (!url) return
+
   status.textContent = "Loading PDF…"
 
-  const data = await file.arrayBuffer()
-  const pdf = await pdfjsLib.getDocument(data).promise
+  const pdf = await pdfjsLib.getDocument(url).promise
   const page = await pdf.getPage(1)
 
   const scale = 1.5
@@ -57,7 +81,7 @@ pdfInput.addEventListener("change", async e => {
   status.textContent = "PDF loaded"
 })
 
-/* ---------------- DRAWING ---------------- */
+/* ===================== DRAWING ===================== */
 
 let drawing = false
 let lastX = 0
@@ -69,9 +93,7 @@ drawCanvas.addEventListener("pointerdown", e => {
   lastY = e.offsetY
 })
 
-drawCanvas.addEventListener("pointerup", () => {
-  drawing = false
-})
+drawCanvas.addEventListener("pointerup", () => drawing = false)
 
 drawCanvas.addEventListener("pointermove", e => {
   if (!drawing) return
@@ -79,15 +101,14 @@ drawCanvas.addEventListener("pointermove", e => {
   const x = e.offsetX
   const y = e.offsetY
 
-  drawLocal(lastX, lastY, x, y)
-
+  drawLine(lastX, lastY, x, y)
   sendStroke(lastX, lastY, x, y)
 
   lastX = x
   lastY = y
 })
 
-function drawLocal(x1, y1, x2, y2) {
+function drawLine(x1, y1, x2, y2) {
   drawCtx.lineWidth = 3
   drawCtx.lineCap = "round"
   drawCtx.strokeStyle = "#ff0055"
@@ -98,7 +119,7 @@ function drawLocal(x1, y1, x2, y2) {
   drawCtx.stroke()
 }
 
-/* ---------------- FIREBASE SYNC ---------------- */
+/* ===================== SYNC STROKES ===================== */
 
 function sendStroke(x1, y1, x2, y2) {
   push(ref(db, `rooms/${ROOM}/strokes`), {
