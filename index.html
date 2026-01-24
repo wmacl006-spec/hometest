@@ -321,24 +321,30 @@ async function start(){
       await uploadBytes(r,f);
       pdfUrl=await getDownloadURL(r);
       await set(pdfRef,pdfUrl);
-      renderPDF(pdfUrl);
+      await renderPDF(pdfUrl); // render PDF first
+      drawExistingStrokes();   // then draw existing strokes
     };
   }
 
   const snap=await get(pdfRef);
-  if(snap.exists()){pdfUrl=snap.val();renderPDF(pdfUrl);}
+  if(snap.exists()){
+    pdfUrl=snap.val();
+    await renderPDF(pdfUrl);  // wait for PDF to render
+    drawExistingStrokes();    // then draw old strokes
+  }
 
-  const drawSnap = await get(drawRef);
-if (drawSnap.exists()) {
-  drawSnap.forEach(s => {
-    drawStroke(s.val());
-  });
+  function drawExistingStrokes(){
+    get(drawRef).then(drawSnap => {
+      if(drawSnap.exists()){
+        drawSnap.forEach(s => drawStroke(s.val()));
+      }
+    });
+  }
+
+  // Listen for new strokes in real-time
+  onChildAdded(drawRef, s => drawStroke(s.val()));
 }
 
-// Continue listening for new strokes
-onChildAdded(drawRef, s => drawStroke(s.val()));
-
-}
 
 /* ---------- DRAWING ---------- */
 function drawStroke(s){
