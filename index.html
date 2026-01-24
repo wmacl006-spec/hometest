@@ -356,6 +356,45 @@ input#joinInput:focus {
   flex: 1;
 }
 
+  .hidden {
+  display: none;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-card {
+  background: var(--panel);
+  padding: 24px;
+  border-radius: 16px;
+  width: 300px;
+  box-shadow: var(--shadow);
+}
+
+.bind {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bind input {
+  width: 80px;
+  text-align: center;
+  background: #111;
+  color: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+
 </style>
 </head>
 
@@ -438,6 +477,18 @@ const chatPanel = document.getElementById("chatPanel");
 /* ---------- TOOLBAR ---------- */
 const toolbar=document.getElementById("toolbar");
 const colorTools=document.querySelectorAll(".tool.color");
+
+const settingsBtn = document.getElementById("settingsBtn");
+const modal = document.getElementById("settingsModal");
+
+settingsBtn.onclick = () => {
+  modal.classList.remove("hidden");
+};
+
+window.closeSettings = () => {
+  modal.classList.add("hidden");
+};
+
 
 colorTools.forEach(t=>{
   const i=+t.dataset.index;
@@ -648,7 +699,6 @@ const defaultBinds = {
 
 let keybinds = JSON.parse(localStorage.getItem("keybinds")) || defaultBinds;
 
-const modal = document.getElementById("settingsModal");
 const inputs = modal.querySelectorAll("input");
 
 inputs.forEach(input => {
