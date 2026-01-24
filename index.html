@@ -69,16 +69,21 @@ header {
 /* ---------- Toolbar ---------- */
 #toolbar {
   position:fixed;
-  top:90px;
-  left:50%;
-  transform:translateX(-50%);
+  bottom:24px;
+  right:24px;
   background:var(--panel);
   border:1px solid var(--border);
-  padding:10px 14px;
-  border-radius:14px;
+  padding:14px;
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  z-index:999;
+}
+
+.tool-row {
   display:flex;
   gap:10px;
-  z-index:999;
 }
 
 .tool {
@@ -108,6 +113,10 @@ input[type=color] {
   border:none;
   background:none;
   cursor:pointer;
+}
+
+input[type=range] {
+  width:140px;
 }
 
 /* ---------- Home ---------- */
@@ -170,13 +179,16 @@ button.secondary {
   <div id="viewer"></div>
 </div>
 
-<!-- TOOLBAR -->
+<!-- HOST-ONLY TOOLBAR -->
 <div id="toolbar">
-  <div class="tool color" data-index="0"></div>
-  <div class="tool color" data-index="1"></div>
-  <div class="tool color" data-index="2"></div>
-  <div class="tool eraser">[ ]</div>
-  <input type="color" id="colorPicker" />
+  <div class="tool-row">
+    <div class="tool color" data-index="0"></div>
+    <div class="tool color" data-index="1"></div>
+    <div class="tool color" data-index="2"></div>
+    <div class="tool eraser">[ ]</div>
+    <input type="color" id="colorPicker" />
+  </div>
+  <input type="range" id="sizeSlider" min="1" max="20" value="3" />
 </div>
 
 <script type="module">
@@ -203,16 +215,19 @@ const storage = getStorage(app);
 
 /* ---------- STATE ---------- */
 let roomCode, isHost=false, pdfUrl;
-let tool = "pen";
-let activeProfile = 0;
-const profiles = ["#b00b55","#00c2ff","#00ff9c"];
+let tool="pen";
+let activeProfile=0;
+let brushSize=3;
+const profiles=["#b00b55","#00c2ff","#00ff9c"];
 
 /* ---------- TOOLBAR ---------- */
-const tools = document.querySelectorAll(".tool.color");
-tools.forEach(t=>{
-  const i = +t.dataset.index;
-  t.style.background = profiles[i];
-  t.onclick = () => {
+const toolbar=document.getElementById("toolbar");
+const colorTools=document.querySelectorAll(".tool.color");
+
+colorTools.forEach(t=>{
+  const i=+t.dataset.index;
+  t.style.background=profiles[i];
+  t.onclick=()=>{
     tool="pen";
     activeProfile=i;
     updateToolbar();
@@ -224,14 +239,18 @@ document.querySelector(".eraser").onclick=()=>{
   updateToolbar();
 };
 
-colorPicker.oninput = e => {
-  profiles[activeProfile] = e.target.value;
-  tools[activeProfile].style.background = e.target.value;
+colorPicker.oninput=e=>{
+  profiles[activeProfile]=e.target.value;
+  colorTools[activeProfile].style.background=e.target.value;
+};
+
+sizeSlider.oninput=e=>{
+  brushSize=+e.target.value;
 };
 
 function updateToolbar(){
   document.querySelectorAll(".tool").forEach(t=>t.classList.remove("active"));
-  if(tool==="pen") tools[activeProfile].classList.add("active");
+  if(tool==="pen") colorTools[activeProfile].classList.add("active");
   if(tool==="eraser") document.querySelector(".eraser").classList.add("active");
 }
 updateToolbar();
@@ -244,10 +263,14 @@ async function start(){
   home.style.display="none";
   workspace.style.display="block";
   roomLabel.textContent=roomCode;
-  if(!isHost) uploadControls.style.display="none";
 
-  const pdfRef = ref(db,`rooms/${roomCode}/pdf`);
-  const drawRef = ref(db,`rooms/${roomCode}/draw`);
+  if(!isHost){
+    uploadControls.style.display="none";
+    toolbar.style.display="none";
+  }
+
+  const pdfRef=ref(db,`rooms/${roomCode}/pdf`);
+  const drawRef=ref(db,`rooms/${roomCode}/draw`);
 
   if(isHost){
     pdfUpload.onchange=async e=>{
@@ -273,7 +296,7 @@ function drawStroke(s){
   const ctx=c.getContext("2d");
   ctx.save();
   ctx.lineCap="round";
-  ctx.lineWidth=3;
+  ctx.lineWidth=s.size;
   if(s.erase){
     ctx.globalCompositeOperation="destination-out";
     ctx.strokeStyle="rgba(0,0,0,1)";
@@ -323,7 +346,13 @@ function enableDrawing(c,page){
     if(!d) return;
     const b=c.getBoundingClientRect();
     const x=e.clientX-b.left,y=e.clientY-b.top;
-    push(r,{page,x1:lx,y1:ly,x2:x,y2:y,color:profiles[activeProfile],erase:tool==="eraser"});
+    push(r,{
+      page,
+      x1:lx,y1:ly,x2:x,y2:y,
+      color:profiles[activeProfile],
+      erase:tool==="eraser",
+      size:brushSize
+    });
     lx=x; ly=y;
   };
 }
@@ -336,7 +365,9 @@ window.downloadAnnotatedPDF=async()=>{
   doc.getPages().forEach((p,i)=>{
     const c=document.getElementById(`draw-${i+1}`);
     if(!c) return;
-    p.drawImage(doc.embedPng(c.toDataURL()),{x:0,y:0,width:p.getWidth(),height:p.getHeight()});
+    p.drawImage(doc.embedPng(c.toDataURL()),{
+      x:0,y:0,width:p.getWidth(),height:p.getHeight()
+    });
   });
   const out=await doc.save();
   const a=document.createElement("a");
