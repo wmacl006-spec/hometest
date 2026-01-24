@@ -371,7 +371,7 @@ async function renderPDF(url){
     w.append(pc,dc);
     viewer.appendChild(w);
     await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
-    enableDrawing(dc,i);
+    if (isHost) enableDrawing(dc, i);
   }
 }
 
@@ -388,13 +388,16 @@ function enableDrawing(c,page){
     if(!d) return;
     const b=c.getBoundingClientRect();
     const x=e.clientX-b.left,y=e.clientY-b.top;
-    push(r,{
-      page,
-      x1:lx,y1:ly,x2:x,y2:y,
-      color:profiles[activeProfile],
-      erase:tool==="eraser",
-      size:brushSize
-    });
+    push(r, {
+  page,
+  x1: lx, y1: ly,
+  x2: x,  y2: y,
+  color: profiles[activeProfile],
+  erase: tool === "eraser",
+  size: brushSize,
+  hostOnly: true
+});
+
     lx=x; ly=y;
   };
 }
