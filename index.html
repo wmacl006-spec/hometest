@@ -2,56 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live PDF Draw</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team PDF Live</title>
 
   <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
 
   <style>
     body {
-      margin: 0;
-      background: #0f0f0f;
+      font-family: sans-serif;
+      background: #111;
       color: white;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      text-align: center;
     }
-
-    header {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      background: #161616;
-    }
-
-    .wrapper {
-      position: relative;
-      width: 100%;
-      height: calc(100vh - 52px);
-      background: #000;
-      overflow: auto;
-    }
-
     canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      touch-action: none;
+      margin-top: 20px;
+      border: 1px solid #333;
     }
   </style>
 </head>
 <body>
 
-<header>
-  <input type="file" id="pdfInput" accept="application/pdf" />
-  <span id="status">Waiting for PDF…</span>
-</header>
+  <h1>📄 Live PDF Viewer</h1>
 
-<div class="wrapper">
+  <input type="file" id="pdfUpload" accept="application/pdf" />
+
+  <br />
+
   <canvas id="pdfCanvas"></canvas>
-  <canvas id="drawCanvas"></canvas>
-</div>
 
-<script type="module" src="main.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
