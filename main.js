@@ -1,16 +1,17 @@
-// --- PDF.js ES MODULE (NO GLOBALS) ---
-import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/legacy/build/pdf.mjs";
+// ---------- PDF.js ----------
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/legacy/build/pdf.worker.min.js";
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
 
-// --- Firebase ---
+// ---------- Firebase ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
   doc,
   setDoc,
-  onSnapshot
+  onSnapshot,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
   getStorage,
@@ -19,7 +20,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// --- Firebase config ---
+// ---------- Config ----------
 const firebaseConfig = {
   apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain: "teampdf-7ec12.firebaseapp.com",
@@ -29,14 +30,17 @@ const firebaseConfig = {
   appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
 };
 
+// ---------- Init ----------
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
 const viewer = document.getElementById("viewer");
-let pdfDoc = null;
 
-// --- Upload PDF ---
+let pdfDoc = null;
+let isRemoteScroll = false;
+
+// ---------- Upload ----------
 document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -47,94 +51,56 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
 
   await setDoc(doc(db, "session", "current"), {
     pdfUrl: url,
+    scrollTop: 0,
     updatedAt: Date.now()
   });
 });
 
-// --- Live updates ---
+// ---------- Firestore sync ----------
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
-  await loadPDF(snap.data().pdfUrl);
+  const data = snap.data();
+
+  if (!pdfDoc) {
+    await loadPDF(data.pdfUrl);
+  }
+
+  if (!isRemoteScroll) {
+    isRemoteScroll = true;
+    viewer.scrollTop = data.scrollTop || 0;
+    setTimeout(() => (isRemoteScroll = false), 50);
+  }
 });
 
-// --- Load & render PDF ---
+// ---------- Scroll broadcast ----------
+viewer.addEventListener("scroll", async () => {
+  if (isRemoteScroll || !pdfDoc) return;
+
+  await updateDoc(doc(db, "session", "current"), {
+    scrollTop: viewer.scrollTop
+  });
+});
+
+// ---------- Render ALL pages ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
 
-  const buffer = await fetch(url).then(r => r.arrayBuffer());
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+
   pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
-    await renderPage(i);
+    const canvas = document.createElement("canvas");
+    viewer.appendChild(canvas);
+
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1.4 });
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const ctx = canvas.getContext("2d");
+    await page.render({ canvasContext: ctx, viewport }).promise;
   }
-}
-
-async function renderPage(num) {
-  const page = await pdfDoc.getPage(num);
-  const viewport = page.getViewport({ scale: 1.4 });
-
-  const pageDiv = document.createElement("div");
-  pageDiv.className = "page";
-  pageDiv.style.width = viewport.width + "px";
-  pageDiv.style.height = viewport.height + "px";
-  viewer.appendChild(pageDiv);
-
-  // PDF canvas
-  const pdfCanvas = document.createElement("canvas");
-  pdfCanvas.width = viewport.width;
-  pdfCanvas.height = viewport.height;
-  pageDiv.appendChild(pdfCanvas);
-
-  await page.render({
-    canvasContext: pdfCanvas.getContext("2d"),
-    viewport
-  }).promise;
-
-  // Drawing canvas
-  const drawCanvas = document.createElement("canvas");
-  drawCanvas.width = viewport.width;
-  drawCanvas.height = viewport.height;
-  drawCanvas.className = "draw-layer";
-  pageDiv.appendChild(drawCanvas);
-
-  enableDrawing(drawCanvas);
-}
-
-// --- Drawing ---
-function enableDrawing(canvas) {
-  const ctx = canvas.getContext("2d");
-
-  let drawing = false;
-  let lastX = 0;
-  let lastY = 0;
-
-  ctx.strokeStyle = "red";
-  ctx.lineWidth = 2;
-  ctx.lineCap = "round";
-
-  canvas.addEventListener("mousedown", e => {
-    drawing = true;
-    const r = canvas.getBoundingClientRect();
-    lastX = e.clientX - r.left;
-    lastY = e.clientY - r.top;
-  });
-
-  canvas.addEventListener("mousemove", e => {
-    if (!drawing) return;
-    const r = canvas.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-
-    lastX = x;
-    lastY = y;
-  });
-
-  ["mouseup", "mouseleave"].forEach(evt =>
-    canvas.addEventListener(evt, () => drawing = false)
-  );
 }
