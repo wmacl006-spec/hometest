@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TeamPDF</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
@@ -46,9 +43,7 @@
       border: 1px solid var(--border);
     }
 
-    input[type=file] {
-      display: none;
-    }
+    input[type=file] { display: none; }
 
     .file-label {
       padding: 10px 16px;
@@ -87,17 +82,20 @@
 
     header .left, header .right { display: flex; gap: 12px; align-items: center; }
 
+    /* IMPORTANT: vertical scroll */
     #viewer {
       height: calc(100vh - 64px);
       overflow-y: auto;
-      padding: 20px;
+      overflow-x: hidden;
+      padding: 24px 0;
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* vertical stacking */
+      align-items: center;
+      gap: 32px;
     }
 
     .page {
       position: relative;
-      margin-bottom: 24px;
     }
 
     canvas { display: block; }
@@ -136,7 +134,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
   import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   const firebaseConfig = {
@@ -183,17 +181,20 @@
         const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
         await uploadBytes(fileRef, file);
         const url = await getDownloadURL(fileRef);
-        set(pdfRef, url);
+        await fetch(pdfRef.toString(), { method: 'PUT', body: JSON.stringify(url) });
         renderPDF(url);
       };
     }
 
     const snap = await get(pdfRef);
-    if (snap.exists()) renderPDF(snap.val());
+    if (snap.exists()) await renderPDF(snap.val());
 
+    /* Draw ALL previous strokes + future ones */
     onChildAdded(drawRef, snap => {
       const { page, x1, y1, x2, y2 } = snap.val();
-      const ctx = document.getElementById(`draw-${page}`).getContext('2d');
+      const canvas = document.getElementById(`draw-${page}`);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
       ctx.strokeStyle = '#b00b55';
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
@@ -258,7 +259,6 @@
       const r = canvas.getBoundingClientRect();
       const x = e.clientX - r.left;
       const y = e.clientY - r.top;
-
       push(drawRef, { page, x1: lastX, y1: lastY, x2: x, y2: y });
       lastX = x;
       lastY = y;
