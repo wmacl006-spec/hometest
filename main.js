@@ -46,6 +46,10 @@ let pdfDoc = null;
 let roomId = null;
 let isTeacher = false;
 
+// unsubscribe handles
+let unsubRoom = null;
+let unsubAnnotations = null;
+
 // ---------- Create Room ----------
 document.getElementById("createRoom").onclick = async () => {
   roomId = crypto.randomUUID().slice(0, 6);
@@ -81,14 +85,21 @@ document.getElementById("joinRoom").onclick = async () => {
 
 // ---------- Leave ----------
 document.getElementById("leaveRoom").onclick = () => {
+  if (unsubRoom) unsubRoom();
+  if (unsubAnnotations) unsubAnnotations();
+
+  unsubRoom = null;
+  unsubAnnotations = null;
+
   roomId = null;
   pdfDoc = null;
   viewer.innerHTML = "";
+
   roomLabel.textContent = "";
   pdfUpload.style.display = "none";
 };
 
-// ---------- Upload PDF ----------
+// ---------- Upload PDF (teacher) ----------
 pdfUpload.onchange = async (e) => {
   const file = e.target.files[0];
   if (!file || !roomId) return;
@@ -106,9 +117,11 @@ pdfUpload.onchange = async (e) => {
   listenAnnotations();
 };
 
-// ---------- Room Listener ----------
+// ---------- Room Listener (PDF only, NO scroll syncing) ----------
 function listenRoom(roomRef) {
-  onSnapshot(roomRef, (snap) => {
+  if (unsubRoom) unsubRoom();
+
+  unsubRoom = onSnapshot(roomRef, (snap) => {
     const data = snap.data();
     if (!data || !data.pdfUrl || pdfDoc) return;
     loadPDF(data.pdfUrl);
@@ -117,6 +130,8 @@ function listenRoom(roomRef) {
 
 // ---------- Load PDF ----------
 async function loadPDF(url) {
+  const prevScroll = viewer.scrollTop;
+
   viewer.innerHTML = "";
   pdfDoc = null;
 
@@ -153,9 +168,11 @@ async function loadPDF(url) {
 
     setupDrawing(overlay, i);
   }
+
+  viewer.scrollTop = prevScroll;
 }
 
-// ---------- Drawing ----------
+// ---------- Drawing (teacher only) ----------
 function setupDrawing(canvas, pageNumber) {
   if (!isTeacher) return;
 
@@ -178,8 +195,8 @@ function setupDrawing(canvas, pageNumber) {
     const y = (e.clientY - rect.top) / canvas.height;
 
     points.push({ x, y });
-    ctx.lineWidth = 2;
     ctx.strokeStyle = "red";
+    ctx.lineWidth = 2;
     ctx.lineTo(x * canvas.width, y * canvas.height);
     ctx.stroke();
   };
@@ -198,31 +215,34 @@ function setupDrawing(canvas, pageNumber) {
 
 // ---------- Annotation Sync ----------
 function listenAnnotations() {
-  if (!roomId) return;
+  if (unsubAnnotations) unsubAnnotations();
 
-  onSnapshot(collection(db, "rooms", roomId, "annotations"), (snap) => {
-    snap.docChanges().forEach((change) => {
-      if (change.type === "added") {
-        drawAnnotation(change.doc.data());
-      }
-    });
-  });
+  unsubAnnotations = onSnapshot(
+    collection(db, "rooms", roomId, "annotations"),
+    (snap) => {
+      snap.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          drawAnnotation(change.doc.data());
+        }
+      });
+    }
+  );
 }
 
 function drawAnnotation(a) {
   const pageDiv = viewer.children[a.page - 1];
   if (!pageDiv) return;
 
-  const canvas = pageDiv.querySelector(".overlay");
-  const ctx = canvas.getContext("2d");
+  const overlay = pageDiv.querySelector(".overlay");
+  const ctx = overlay.getContext("2d");
 
   ctx.beginPath();
   ctx.strokeStyle = a.color;
   ctx.lineWidth = 2;
 
   a.points.forEach((p, i) => {
-    const x = p.x * canvas.width;
-    const y = p.y * canvas.height;
+    const x = p.x * overlay.width;
+    const y = p.y * overlay.height;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
@@ -232,14 +252,23 @@ function drawAnnotation(a) {
 
 // ---------- Download Annotated PDF ----------
 document.getElementById("downloadPdf").onclick = () => {
-  if (!pdfDoc) return;
+  if (!pdfDoc) {
+    alert("No PDF loaded");
+    return;
+  }
 
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+  const jsPDFLib = window.jspdf?.jsPDF;
+  if (!jsPDFLib) {
+    alert("jsPDF failed to load");
+    return;
+  }
+
+  const pdf = new jsPDFLib();
 
   [...viewer.children].forEach((pageDiv, i) => {
-    const base = pageDiv.querySelector("canvas");
-    const overlay = pageDiv.querySelector(".overlay");
+    const canvases = pageDiv.querySelectorAll("canvas");
+    const base = canvases[0];
+    const overlay = canvases[1];
 
     const temp = document.createElement("canvas");
     temp.width = base.width;
@@ -250,6 +279,7 @@ document.getElementById("downloadPdf").onclick = () => {
     ctx.drawImage(overlay, 0, 0);
 
     const img = temp.toDataURL("image/jpeg", 1.0);
+
     if (i > 0) pdf.addPage();
     pdf.addImage(
       img,
