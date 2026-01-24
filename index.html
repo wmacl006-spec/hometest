@@ -250,12 +250,13 @@ input#joinInput:focus {
   box-shadow: 0 6px 20px rgba(255, 0, 90, 0.4);
 }
 
-  #chatPanel {
+ /* ---------- Chat Panel ---------- */
+#chatPanel {
   position: fixed;
   bottom: 24px;
   left: 24px;
   width: 260px;
-  height: 400px;         /* increased height so inputs fit */
+  height: 400px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -265,11 +266,10 @@ input#joinInput:focus {
   font-size: 0.9rem;
   overflow: hidden;
   z-index: 1000;
-  display: none;          /* hidden by default until joining/hosting */
+  display: none; /* hidden by default until joining/hosting */
 }
 
-
-
+/* Header */
 #chatHeader {
   background: var(--accent);
   color: white;
@@ -277,16 +277,19 @@ input#joinInput:focus {
   font-weight: 600;
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
+  text-align: center;
 }
 
+/* Chat messages scrollable area */
 #chatMessages {
   flex: 1;
   padding: 8px;
-  overflow-y: auto;       /* scrollable area */
+  overflow-y: auto;
   background: #111;
   word-break: break-word;
 }
 
+/* Individual chat message */
 .chatMessage {
   margin-bottom: 6px;
 }
@@ -295,48 +298,63 @@ input#joinInput:focus {
   color: var(--accent);
 }
 
-#chatInputContainer {
-  display: flex;
-  gap: 6px;
+/* Input for name and message */
+#chatName,
+#chatInput {
+  width: 100%;
   padding: 6px 8px;
-}
-
-#chatInputContainer input {
-  flex: 1;
-  padding: 6px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #111;
   color: white;
+  margin-bottom: 6px;
+  box-sizing: border-box;
 }
 
-#chatInputContainer input:disabled {
+#chatName:focus,
+#chatInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 6px rgba(255, 0, 90, 0.5);
+}
+
+#chatInput:disabled {
   opacity: 0.5;
 }
 
+/* Container for buttons */
+#chatInputContainer {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+/* Buttons */
 #chatInputContainer button {
-  background: var(--accent);
-  border: none;
-  color: white;
-  padding: 6px 10px;
+  flex: 1;
+  padding: 6px 0;
   border-radius: 8px;
+  border: none;
   cursor: pointer;
+  background: var(--accent);
+  color: white;
+  font-size: 0.9rem;
   transition: all var(--transition);
+  text-align: center;
 }
 
 #chatInputContainer button:hover {
   background: var(--accent-hover);
 }
 
-  #chatName {
-  padding: 6px 8px;
-  border: none;
-  border-top: 1px solid var(--border);
-  background: #111;
-  color: white;
-  outline: none;
+/* Optional: make "Send" slightly smaller */
+#chatSend {
+  flex: 1.2;  /* slightly larger than Raise Hand */
 }
 
+#raiseHand {
+  flex: 1;
+}
 
 </style>
 </head>
@@ -420,6 +438,12 @@ const chatPanel = document.getElementById("chatPanel");
 /* ---------- TOOLBAR ---------- */
 const toolbar=document.getElementById("toolbar");
 const colorTools=document.querySelectorAll(".tool.color");
+
+const settingsBtn = document.getElementById("settingsBtn");
+const modal = document.getElementById("settingsModal");
+
+settingsBtn.onclick = () => modal.classList.remove("hidden");
+window.closeSettings = () => modal.classList.add("hidden");
 
 colorTools.forEach(t=>{
   const i=+t.dataset.index;
@@ -526,6 +550,18 @@ chatSend.onclick = () => {
   push(chatRef, { name, msg });
   chatInput.value = "";
 };
+
+  // Raise hand button
+raiseHand.onclick = () => {
+  const name = chatName.value.trim();
+  if (!name || !chatRef) return;
+
+  push(chatRef, {
+    name: "✋",
+    msg: `${name} has a question`
+  });
+};
+
 
 // Listen for messages
 onChildAdded(chatRef, snapshot => {
@@ -751,15 +787,19 @@ function leaveRoom() {
 
 <!-- Chat Panel -->
 <div id="chatPanel">
-  <div id="chatHeader">💬 Chat</div>
+  <div id="chatHeader">Chat</div>
   <div id="chatMessages"></div>
 
   <input type="text" id="chatName" placeholder="Enter your name" />
 
-  <div id="chatInputContainer">
-    <input type="text" id="chatInput" placeholder="Type a message..." disabled />
-    <button id="chatSend" disabled>Send</button>
-  </div>
+<input type="text" id="chatInput" placeholder="Type a message..." disabled />
+
+<div id="chatInputContainer">
+  <button id="chatSend" title="Send">➤</button>
+  <button id="raiseHand" title="Raise Hand">✋ Raise Hand</button>
+</div>
+
+
 </div>
 
 
