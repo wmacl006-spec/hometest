@@ -127,7 +127,14 @@ viewer.addEventListener("scroll", async () => {
 // ---------- Render PDF ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
-  pdfDoc = await pdfjsLib.getDocument(url).promise;
+  pdfDoc = null;
+
+  // 👇 Fetch the PDF manually
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+
+  // 👇 Give PDF.js raw bytes
+  pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     const page = await pdfDoc.getPage(i);
