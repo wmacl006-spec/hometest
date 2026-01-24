@@ -17,7 +17,7 @@ const firebaseConfig = {
   authDomain: "teampdf-7ec12.firebaseapp.com",
   databaseURL: "https://teampdf-7ec12-default-rtdb.firebaseio.com",
   projectId: "teampdf-7ec12",
-  storageBucket: "teampdf-7ec12.appspot.com",
+  storageBucket: "teampdf-7ec12.firebasestorage.app",
   messagingSenderId: "307072046237",
   appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
 };
