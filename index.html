@@ -5,14 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TeamPDF</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
-
-  <!-- PDF-lib -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
   <style>
@@ -36,13 +32,12 @@
       overflow: hidden;
     }
 
-    /* ---------- Base UI ---------- */
     button {
       border: none;
       cursor: pointer;
       border-radius: 12px;
       font-weight: 600;
-      padding: 12px 16px;
+      padding: 10px 14px;
       transition: transform .08s ease, opacity .08s ease;
     }
 
@@ -53,15 +48,15 @@
     }
 
     button.secondary {
-      background: transparent;
+      background: var(--panel-soft);
       color: var(--text);
       border: 1px solid var(--border);
     }
 
     button.icon {
-      padding: 10px 12px;
       background: var(--panel-soft);
       border: 1px solid var(--border);
+      padding: 8px 10px;
     }
 
     button:hover { transform: translateY(-1px); }
@@ -70,8 +65,8 @@
     input[type=file] { display: none; }
 
     input[type=color] {
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       border: none;
       padding: 0;
       background: none;
@@ -101,32 +96,41 @@
       letter-spacing: 2px;
     }
 
-    /* ---------- Workspace ---------- */
     #workspace { display: none; height: 100vh; }
 
     header {
       height: 64px;
       padding: 0 16px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 12px;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
+    }
+
+    .roomBadge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--accent);
     }
 
     .toolbar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       background: var(--panel-soft);
-      padding: 8px 12px;
-      border-radius: 16px;
+      padding: 6px 10px;
+      border-radius: 14px;
       border: 1px solid var(--border);
     }
 
     .profile {
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       cursor: pointer;
       border: 2px solid transparent;
@@ -152,7 +156,6 @@
 </head>
 <body>
 
-<!-- ---------- Home ---------- -->
 <div class="center" id="home">
   <div class="card">
     <h1>Team<span style="color:#b00b55">PDF</span></h1>
@@ -163,9 +166,10 @@
   </div>
 </div>
 
-<!-- ---------- Workspace ---------- -->
 <div id="workspace">
   <header>
+    <div class="roomBadge" id="roomCodeLabel"></div>
+
     <div class="toolbar">
       <div id="profiles"></div>
       <input type="color" id="colorPicker" />
@@ -174,8 +178,8 @@
 
     <div class="spacer"></div>
 
-    <div id="hostControls" style="display:none; gap:10px; display:flex">
-      <label class="primary" for="pdfUpload" style="padding:10px 16px; border-radius:12px; cursor:pointer">Upload PDF</label>
+    <div id="hostControls" style="display:none; gap:10px; align-items:center">
+      <label class="primary" for="pdfUpload">Upload PDF</label>
       <input id="pdfUpload" type="file" accept="application/pdf" />
       <button class="secondary" onclick="downloadAnnotatedPDF()">Download</button>
     </div>
@@ -210,11 +214,11 @@
   let roomCode = null;
   let isHost = false;
   let erasing = false;
+  let drawListenerAttached = false;
 
   const profiles = ['#b00b55', '#4fd1c5', '#f6ad55'];
   let activeProfile = 0;
 
-  /* ---------- Toolbar ---------- */
   const profilesEl = document.getElementById('profiles');
   const colorPicker = document.getElementById('colorPicker');
   const eraserBtn = document.getElementById('eraserBtn');
@@ -248,7 +252,6 @@
 
   renderProfiles();
 
-  /* ---------- Navigation ---------- */
   window.hostRoom = () => {
     isHost = true;
     roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -263,10 +266,10 @@
 
   window.leaveRoom = () => location.reload();
 
-  /* ---------- Session ---------- */
   async function startSession() {
     document.getElementById('home').style.display = 'none';
     document.getElementById('workspace').style.display = 'block';
+    document.getElementById('roomCodeLabel').innerText = roomCode;
 
     if (isHost) document.getElementById('hostControls').style.display = 'flex';
 
@@ -281,17 +284,24 @@
         await uploadBytes(fileRef, file);
         const url = await getDownloadURL(fileRef);
         await set(pdfRef, url);
-        renderPDF(url);
+        await renderPDF(url);
+        attachDrawListener(drawRef);
       };
     }
 
     const snap = await get(pdfRef);
-    if (snap.exists()) renderPDF(snap.val());
+    if (snap.exists()) {
+      await renderPDF(snap.val());
+      attachDrawListener(drawRef);
+    }
+  }
 
+  function attachDrawListener(drawRef) {
+    if (drawListenerAttached) return;
+    drawListenerAttached = true;
     onChildAdded(drawRef, s => drawStroke(s.val()));
   }
 
-  /* ---------- Drawing ---------- */
   function drawStroke(s) {
     const canvas = document.getElementById(`draw-${s.page}`);
     if (!canvas) return;
@@ -327,8 +337,6 @@
 
       drawCanvas.id = `draw-${i}`;
       drawCanvas.style.position = 'absolute';
-      drawCanvas.style.top = 0;
-      drawCanvas.style.left = 0;
 
       wrap.append(pdfCanvas, drawCanvas);
       viewer.appendChild(wrap);
@@ -370,10 +378,9 @@
     };
   }
 
-  /* ---------- Export ---------- */
   window.downloadAnnotatedPDF = async () => {
     const snap = await get(ref(db, `rooms/${roomCode}/pdf`));
-    if (!snap.exists()) return alert('No PDF');
+    if (!snap.exists()) return;
 
     const bytes = await fetch(snap.val()).then(r => r.arrayBuffer());
     const pdfDoc = await PDFLib.PDFDocument.load(bytes);
