@@ -358,23 +358,45 @@ function enableDrawing(c,page){
 }
 
 /* ---------- EXPORT ---------- */
-window.downloadAnnotatedPDF=async()=>{
-  if(!pdfUrl) return;
-  const bytes=await fetch(pdfUrl).then(r=>r.arrayBuffer());
-  const doc=await PDFLib.PDFDocument.load(bytes);
-  doc.getPages().forEach((p,i)=>{
-    const c=document.getElementById(`draw-${i+1}`);
-    if(!c) return;
-    p.drawImage(doc.embedPng(c.toDataURL()),{
-      x:0,y:0,width:p.getWidth(),height:p.getHeight()
+window.downloadAnnotatedPDF = async () => {
+  if (!pdfUrl) return;
+
+  const bytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
+  const doc = await PDFLib.PDFDocument.load(bytes);
+
+  const pages = doc.getPages();
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const canvas = document.getElementById(`draw-${i + 1}`);
+    if (!canvas) continue;
+
+    const pngDataUrl = canvas.toDataURL("image/png");
+    const pngImage = await doc.embedPng(pngDataUrl);
+
+    const { width, height } = page.getSize();
+
+    page.drawImage(pngImage, {
+      x: 0,
+      y: 0,
+      width,
+      height
     });
-  });
-  const out=await doc.save();
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([out],{type:"application/pdf"}));
-  a.download=`TeamPDF-${roomCode}.pdf`;
+  }
+
+  const out = await doc.save();
+
+  const blob = new Blob([out], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `TeamPDF-${roomCode}.pdf`;
   a.click();
+
+  URL.revokeObjectURL(url);
 };
+
 </script>
 </body>
 </html>
