@@ -2,27 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Team PDF Live</title>
+  <title>Live PDF Viewer</title>
 
-  <!-- PDF.js -->
+  <!-- PDF.js (UMD build exposes pdfjsLib on window) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
 
   <style>
     body {
-      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
       background: #111;
-      color: white;
+      color: #eee;
+      font-family: Arial, sans-serif;
       text-align: center;
     }
+
+    input {
+      margin-bottom: 20px;
+    }
+
     canvas {
-      margin-top: 20px;
-      border: 1px solid #333;
+      border: 1px solid #444;
+      background: #222;
+      max-width: 100%;
     }
   </style>
 </head>
 <body>
 
-  <h1>📄 Live PDF Viewer</h1>
+  <h2>📄 Live PDF Viewer</h2>
 
   <input type="file" id="pdfUpload" accept="application/pdf" />
 
@@ -30,6 +38,8 @@
 
   <canvas id="pdfCanvas"></canvas>
 
+  <!-- Your app -->
   <script type="module" src="./main.js"></script>
+
 </body>
 </html>
