@@ -8,8 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
 <style>
 :root {
@@ -87,9 +85,9 @@ header {
   right: 16px;
   background: var(--panel);
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 10px;
   display: none;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -104,11 +102,6 @@ header {
 #eraser {
   border-radius: 6px;
   background: #222;
-  color: #fff;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 input[type="color"] {
@@ -120,17 +113,7 @@ input[type="color"] {
 }
 
 input[type="range"] {
-  width: 90px;
-}
-
-#downloadBtn {
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--accent);
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  font-size: 12px;
+  width: 80px;
 }
 </style>
 </head>
@@ -164,7 +147,6 @@ input[type="range"] {
   <div id="eraser" class="tool-btn" onclick="setEraser()">[ ]</div>
   <input type="color" onchange="setColor(this.value)">
   <input type="range" min="1" max="20" value="4" onchange="brushSize=this.value">
-  <button id="downloadBtn" onclick="downloadPDF()">Download</button>
 </div>
 
 <script>
@@ -175,7 +157,6 @@ let isHost = false;
 let brushColor = "#3b82f6";
 let brushSize = 4;
 let drawing = false;
-let loadedPdfBytes = null;
 
 const pdfCanvas = document.getElementById("pdfCanvas");
 const drawCanvas = document.getElementById("drawCanvas");
@@ -186,6 +167,7 @@ function startHost() {
   document.getElementById("home").style.display = "none";
   document.getElementById("workspace").style.display = "flex";
   document.getElementById("roomLabel").innerText = "HOST";
+
   document.getElementById("toolbar").style.display = "flex";
 }
 
@@ -193,16 +175,18 @@ document.getElementById("pdfUpload").addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
 
-  loadedPdfBytes = await file.arrayBuffer();
-
-  const pdf = await pdfjsLib.getDocument({ data: loadedPdfBytes }).promise;
+  const bytes = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
   const page = await pdf.getPage(1);
+
   const viewport = page.getViewport({ scale: 1.5 });
 
   pdfCanvas.width = viewport.width;
   pdfCanvas.height = viewport.height;
   drawCanvas.width = viewport.width;
   drawCanvas.height = viewport.height;
+
+  drawCanvas.style.top = pdfCanvas.offsetTop + "px";
 
   await page.render({
     canvasContext: pdfCanvas.getContext("2d"),
@@ -237,33 +221,6 @@ function setColor(c) {
 
 function setEraser() {
   dctx.globalCompositeOperation = "destination-out";
-}
-
-/* Download PDF with drawings */
-async function downloadPDF() {
-  if (!loadedPdfBytes) return;
-
-  const pdfDoc = await PDFLib.PDFDocument.load(loadedPdfBytes);
-  const page = pdfDoc.getPages()[0];
-
-  const png = drawCanvas.toDataURL("image/png");
-  const img = await pdfDoc.embedPng(png);
-
-  const { width, height } = page.getSize();
-  page.drawImage(img, {
-    x: 0,
-    y: 0,
-    width,
-    height
-  });
-
-  const bytes = await pdfDoc.save();
-  const blob = new Blob([bytes], { type: "application/pdf" });
-
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "annotated.pdf";
-  a.click();
 }
 </script>
 
