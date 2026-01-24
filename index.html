@@ -13,183 +13,233 @@
 
 <style>
 :root {
-  --bg:#0e0e11;
-  --panel:#16161c;
-  --accent:#b00b55;
-  --border:#262633;
-  --text:#f2f2f2;
+  --bg: #0e0e11;
+  --panel: #16161c;
+  --accent: #b00b55;
+  --border: #262633;
+  --text: #f2f2f2;
+  --hover: rgba(255,255,255,0.05);
+  --shadow: rgba(0,0,0,0.35);
 }
 
-* { box-sizing:border-box; font-family:Inter,sans-serif; }
+* { box-sizing: border-box; font-family: Inter, sans-serif; }
 
 body {
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  height:100vh;
-  overflow:hidden;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ---------- Layout ---------- */
-#workspace { display:none; height:100vh; }
+#workspace { display: none; height: 100vh; }
 
 header {
-  height:64px;
-  background:var(--panel);
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid var(--border);
+  height: 64px;
+  background: var(--panel);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 6px var(--shadow);
 }
 
 #viewer {
-  height:calc(100vh - 64px);
-  overflow-y:auto;
-  padding:24px 0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:32px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
 }
 
 /* ---------- PDF Layers ---------- */
 .page {
-  position:relative;
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  position: relative;
+  box-shadow: 0 16px 32px rgba(0,0,0,0.4);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.pdf-layer { position:relative; z-index:1; }
+.pdf-layer { position: relative; z-index: 1; border-radius: 12px; }
 .draw-layer {
-  position:absolute;
-  inset:0;
-  z-index:2;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: crosshair;
 }
 
 /* ---------- Toolbar ---------- */
 #toolbar {
-  position:fixed;
-  bottom:24px;
-  right:24px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  padding:14px;
-  border-radius:16px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  z-index:999;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 999;
+  box-shadow: 0 8px 20px var(--shadow);
 }
 
 .tool-row {
-  display:flex;
-  gap:10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .tool {
-  width:34px;
-  height:34px;
-  border-radius:50%;
-  border:2px solid var(--border);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.tool.active { outline:2px solid white; }
+.tool:hover { transform: scale(1.1); }
+.tool.active { outline: 2px solid var(--accent); }
 
 .tool.eraser {
-  border-radius:8px;
-  background:#111;
-  color:white;
-  font-weight:700;
+  border-radius: 10px;
+  background: #111;
+  color: white;
+  font-weight: 700;
 }
-
-  .modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-
-.modal.hidden { display:none; }
-
-.modal-card {
-  background:var(--panel);
-  padding:24px;
-  border-radius:16px;
-  width:300px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.bind {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.bind input {
-  width:90px;
-  background:#111;
-  border:1px solid var(--border);
-  color:white;
-  padding:6px 8px;
-  border-radius:8px;
-  text-align:center;
-  cursor:pointer;
-}
-
 
 input[type=color] {
-  width:34px;
-  height:34px;
-  padding:0;
-  border:none;
-  background:none;
-  cursor:pointer;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
 }
 
 input[type=range] {
-  width:140px;
+  width: 140px;
 }
 
-/* ---------- Home ---------- */
-.center {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  height:100%;
-}
-
-.card {
-  background:var(--panel);
-  padding:40px;
-  border-radius:20px;
-  width:360px;
-  text-align:center;
-}
-
+/* ---------- Buttons ---------- */
 button {
-  background:linear-gradient(135deg,#b00b55,#d4146a);
-  border:none;
-  color:white;
-  padding:12px 16px;
-  border-radius:12px;
-  font-weight:600;
-  cursor:pointer;
+  background: linear-gradient(135deg, var(--accent), #d4146a);
+  border: none;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px var(--shadow);
 }
 
 button.secondary {
-  background:transparent;
-  border:1px solid var(--border);
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
 }
+
+button.secondary:hover {
+  background: var(--hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- Modals ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.hidden { display: none; }
+
+.modal-card {
+  background: var(--panel);
+  padding: 24px;
+  border-radius: 16px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+/* ---------- Keybind Inputs ---------- */
+.bind {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.bind input {
+  width: 90px;
+  background: #111;
+  border: 1px solid var(--border);
+  color: white;
+  padding: 6px 8px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* ---------- Home Page ---------- */
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.card {
+  background: var(--panel);
+  padding: 40px;
+  border-radius: 20px;
+  width: 360px;
+  text-align: center;
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+input#joinInput {
+  width: calc(100% - 20px);
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+}
+
 </style>
 </head>
 
