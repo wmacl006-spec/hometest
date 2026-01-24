@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Join</title>
+  <title>Viewer</title>
   <link rel="stylesheet" href="style.css">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -10,8 +10,10 @@
 <body>
   <h2>Viewer</h2>
 
-  <canvas id="pdfCanvas"></canvas>
-  <canvas id="drawCanvas"></canvas>
+  <div id="canvasContainer">
+    <canvas id="pdfCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+  </div>
 
   <script type="module" src="join.js"></script>
 </body>
