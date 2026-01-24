@@ -75,7 +75,11 @@ header strong {
   background:#000;
 }
 
-.pdf-layer { position:relative; z-index:1; }
+.pdf-layer,
+.draw-layer {
+  display:block;
+}
+
 .draw-layer {
   position:absolute;
   inset:0;
@@ -212,6 +216,13 @@ input[type=color] {
 }
 
 input[type=range] { width:160px; }
+
+#settingsBtn {
+  margin-top:6px;
+  padding:8px 12px;
+  border-radius:10px;
+  font-size:13px;
+}
 </style>
 </head>
 
@@ -249,6 +260,7 @@ input[type=range] { width:160px; }
     <input type="color" id="colorPicker" />
   </div>
   <input type="range" id="sizeSlider" min="1" max="20" value="3" />
+  <button class="secondary" id="settingsBtn">⚙ Settings</button>
 </div>
 
 <script type="module">
@@ -277,7 +289,6 @@ let roomCode, isHost=false, pdfUrl;
 let tool="pen", activeProfile=0, brushSize=3;
 const profiles=["#b00b55","#00c2ff","#00ff9c"];
 
-const toolbar=document.getElementById("toolbar");
 const colorTools=document.querySelectorAll(".tool.color");
 
 colorTools.forEach(t=>{
@@ -287,6 +298,7 @@ colorTools.forEach(t=>{
 });
 
 document.querySelector(".eraser").onclick=()=>{ tool="eraser"; updateToolbar(); };
+settingsBtn.onclick=()=>alert("Settings coming soon 👀");
 
 colorPicker.oninput=e=>{
   profiles[activeProfile]=e.target.value;
@@ -340,7 +352,7 @@ function drawStroke(s){
   ctx.lineCap="round";
   ctx.lineWidth=s.size;
   ctx.globalCompositeOperation=s.erase?"destination-out":"source-over";
-  ctx.strokeStyle=s.erase?"rgba(0,0,0,1)":s.color;
+  ctx.strokeStyle=s.color;
   ctx.beginPath();
   ctx.moveTo(s.x1,s.y1);
   ctx.lineTo(s.x2,s.y2);
@@ -351,20 +363,29 @@ function drawStroke(s){
 async function renderPDF(url){
   viewer.innerHTML="";
   const pdf=await pdfjsLib.getDocument(url).promise;
+
   for(let i=1;i<=pdf.numPages;i++){
     const p=await pdf.getPage(i);
     const v=p.getViewport({scale:1.4});
+
     const w=document.createElement("div");
     w.className="page";
+    w.style.width=`${v.width}px`;
+    w.style.height=`${v.height}px`;
+
     const pc=document.createElement("canvas");
     const dc=document.createElement("canvas");
+
     pc.className="pdf-layer";
     dc.className="draw-layer";
+
     pc.width=dc.width=v.width;
     pc.height=dc.height=v.height;
     dc.id=`draw-${i}`;
+
     w.append(pc,dc);
     viewer.appendChild(w);
+
     await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
     enableDrawing(dc,i);
   }
@@ -373,16 +394,22 @@ async function renderPDF(url){
 function enableDrawing(c,page){
   let d=false,lx,ly;
   const r=ref(db,`rooms/${roomCode}/draw`);
+
   c.onmousedown=e=>{
     d=true;
     const b=c.getBoundingClientRect();
-    lx=e.clientX-b.left; ly=e.clientY-b.top;
+    lx=e.clientX-b.left;
+    ly=e.clientY-b.top;
   };
+
   c.onmouseup=c.onmouseleave=()=>d=false;
+
   c.onmousemove=e=>{
     if(!d) return;
     const b=c.getBoundingClientRect();
-    const x=e.clientX-b.left,y=e.clientY-b.top;
+    const x=e.clientX-b.left;
+    const y=e.clientY-b.top;
+
     push(r,{page,x1:lx,y1:ly,x2:x,y2:y,color:profiles[activeProfile],erase:tool==="eraser",size:brushSize});
     lx=x; ly=y;
   };
@@ -392,10 +419,25 @@ window.downloadAnnotatedPDF=async()=>{
   if(!pdfUrl) return;
   const bytes=await fetch(pdfUrl).then(r=>r.arrayBuffer());
   const doc=await PDFLib.PDFDocument.load(bytes);
-  doc.getPages().forEach((p,i)=>{
+
+  for(let i=0;i<doc.getPageCount();i++){
+    const p=doc.getPages()[i];
     const c=document.getElementById(`draw-${i+1}`);
-    if(c) p.drawImage(doc.embedPng(c.toDataURL()),{x:0,y:0,width:p.getWidth(),height:p.getHeight()});
-  });
+    if(!c) continue;
+
+    const png=await fetch(c.toDataURL()).then(r=>r.arrayBuffer());
+    const img=await doc.embedPng(png);
+
+    const sx=p.getWidth()/c.width;
+    const sy=p.getHeight()/c.height;
+
+    p.drawImage(img,{
+      x:0,y:0,
+      width:c.width*sx,
+      height:c.height*sy
+    });
+  }
+
   const out=await doc.save();
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([out],{type:"application/pdf"}));
