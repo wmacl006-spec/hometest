@@ -1,21 +1,25 @@
 body {
   font-family: Arial, sans-serif;
   text-align: center;
-  background: #f5f5f5;
+  background: #f4f4f4;
 }
 
 #canvasContainer {
   position: relative;
   display: inline-block;
+  margin-top: 10px;
 }
 
 canvas {
   position: absolute;
   top: 0;
   left: 0;
-  border: 1px solid #333;
+}
+
+#pdfCanvas {
+  z-index: 1;
 }
 
 #drawCanvas {
-  pointer-events: auto;
+  z-index: 2;
 }
