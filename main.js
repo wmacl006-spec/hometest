@@ -38,19 +38,25 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// ---------- DOM ----------
 const viewer = document.getElementById("viewer");
 const pdfUpload = document.getElementById("pdfUpload");
+const uploadBtn = document.getElementById("uploadBtn");
 const roomLabel = document.getElementById("roomLabel");
+const toolbar = document.querySelector(".toolbar");
 
+// ---------- State ----------
 let pdfDoc = null;
 let roomId = null;
 let isTeacher = false;
 
-// unsubscribe handles
 let unsubRoom = null;
 let unsubAnnotations = null;
 
-// ---------- Create Room ----------
+// ---------- UI Hooks ----------
+uploadBtn.onclick = () => pdfUpload.click();
+
+// ---------- Create Room (Teacher) ----------
 document.getElementById("createRoom").onclick = async () => {
   roomId = crypto.randomUUID().slice(0, 6);
   isTeacher = true;
@@ -59,18 +65,23 @@ document.getElementById("createRoom").onclick = async () => {
     createdAt: Date.now()
   });
 
-  roomLabel.textContent = `Room: ${roomId}`;
-  pdfUpload.style.display = "inline-block";
+  roomLabel.textContent = `Room ${roomId}`;
+  roomLabel.className = "pill teacher";
+
+  pdfUpload.style.display = "none";
+  toolbar.style.display = "flex";
 };
 
-// ---------- Join Room ----------
+// ---------- Join Room (Student) ----------
 document.getElementById("joinRoom").onclick = async () => {
   roomId = document.getElementById("roomInput").value.trim();
   if (!roomId) return;
 
   isTeacher = false;
-  pdfUpload.style.display = "none";
-  roomLabel.textContent = `Room: ${roomId}`;
+  toolbar.style.display = "none";
+
+  roomLabel.textContent = `Room ${roomId}`;
+  roomLabel.className = "pill";
 
   const roomRef = doc(db, "rooms", roomId);
   const snap = await getDoc(roomRef);
@@ -96,13 +107,15 @@ document.getElementById("leaveRoom").onclick = () => {
   viewer.innerHTML = "";
 
   roomLabel.textContent = "";
-  pdfUpload.style.display = "none";
+  roomLabel.className = "pill";
+
+  toolbar.style.display = "none";
 };
 
-// ---------- Upload PDF (teacher) ----------
+// ---------- Upload PDF ----------
 pdfUpload.onchange = async (e) => {
   const file = e.target.files[0];
-  if (!file || !roomId) return;
+  if (!file || !roomId || !isTeacher) return;
 
   const storageRef = ref(storage, `pdfs/${roomId}.pdf`);
   await uploadBytes(storageRef, file);
@@ -117,7 +130,7 @@ pdfUpload.onchange = async (e) => {
   listenAnnotations();
 };
 
-// ---------- Room Listener (PDF only, NO scroll syncing) ----------
+// ---------- Firestore: Room ----------
 function listenRoom(roomRef) {
   if (unsubRoom) unsubRoom();
 
@@ -137,6 +150,7 @@ async function loadPDF(url) {
 
   const response = await fetch(url);
   const buffer = await response.arrayBuffer();
+
   pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -172,7 +186,7 @@ async function loadPDF(url) {
   viewer.scrollTop = prevScroll;
 }
 
-// ---------- Drawing (teacher only) ----------
+// ---------- Drawing (Teacher Only) ----------
 function setupDrawing(canvas, pageNumber) {
   if (!isTeacher) return;
 
@@ -190,12 +204,13 @@ function setupDrawing(canvas, pageNumber) {
 
   canvas.onmousemove = (e) => {
     if (!drawing) return;
+
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) / canvas.width;
     const y = (e.clientY - rect.top) / canvas.height;
 
     points.push({ x, y });
-    ctx.strokeStyle = "red";
+    ctx.strokeStyle = "#ff4d4d";
     ctx.lineWidth = 2;
     ctx.lineTo(x * canvas.width, y * canvas.height);
     ctx.stroke();
@@ -208,12 +223,12 @@ function setupDrawing(canvas, pageNumber) {
     await addDoc(collection(db, "rooms", roomId, "annotations"), {
       page: pageNumber,
       points,
-      color: "red"
+      color: "#ff4d4d"
     });
   };
 }
 
-// ---------- Annotation Sync ----------
+// ---------- Firestore: Annotations ----------
 function listenAnnotations() {
   if (unsubAnnotations) unsubAnnotations();
 
@@ -252,16 +267,10 @@ function drawAnnotation(a) {
 
 // ---------- Download Annotated PDF ----------
 document.getElementById("downloadPdf").onclick = () => {
-  if (!pdfDoc) {
-    alert("No PDF loaded");
-    return;
-  }
+  if (!pdfDoc) return alert("No PDF loaded");
 
   const jsPDFLib = window.jspdf?.jsPDF;
-  if (!jsPDFLib) {
-    alert("jsPDF failed to load");
-    return;
-  }
+  if (!jsPDFLib) return alert("jsPDF failed to load");
 
   const pdf = new jsPDFLib();
 
