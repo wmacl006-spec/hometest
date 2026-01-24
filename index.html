@@ -39,11 +39,17 @@
     }
 
     canvas {
-      display: block;
-      margin: 0 auto;
-      background: #222;
-      border: 1px solid #444;
-    }
+  border: 1px solid #444;
+}
+
+.page canvas:first-child {
+  background: #222; /* PDF canvas only */
+}
+
+.overlay {
+  background: transparent;
+}
+
 
     .overlay {
       position: absolute;
