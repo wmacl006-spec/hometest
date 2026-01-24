@@ -5,186 +5,171 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TeamPDF</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+
+  <!-- PDF-lib for export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
   <style>
     :root {
       --bg: #0e0e11;
       --panel: #16161c;
-      --panel-soft: #1c1c25;
       --accent: #b00b55;
-      --text: #f3f3f4;
+      --accent-soft: rgba(176, 11, 85, 0.15);
+      --text: #f2f2f2;
       --muted: #9a9aa3;
-      --border: #2a2a36;
+      --border: #262633;
     }
 
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
     body {
       margin: 0;
-      height: 100vh;
       background: radial-gradient(circle at top, #1a1a22, var(--bg));
       color: var(--text);
+      height: 100vh;
       overflow: hidden;
     }
 
+    /* ---------- Buttons & Inputs ---------- */
     button {
-      border: none;
-      cursor: pointer;
-      border-radius: 12px;
-      font-weight: 600;
-      padding: 10px 14px;
-      transition: transform .08s ease, opacity .08s ease;
-    }
-
-    button.primary {
       background: linear-gradient(135deg, var(--accent), #d4146a);
+      border: none;
       color: white;
-      box-shadow: 0 10px 30px rgba(176,11,85,.35);
-    }
-
-    button.secondary {
-      background: var(--panel-soft);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    button.icon {
-      background: var(--panel-soft);
-      border: 1px solid var(--border);
-      padding: 8px 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .08s ease, opacity .08s ease;
+      box-shadow: 0 10px 25px rgba(176,11,85,.35);
     }
 
     button:hover { transform: translateY(-1px); }
     button:active { transform: translateY(0); opacity: .9; }
 
-    input[type=file] { display: none; }
-
-    input[type=color] {
-      width: 34px;
-      height: 34px;
-      border: none;
-      padding: 0;
-      background: none;
-      cursor: pointer;
+    button.secondary {
+      background: transparent;
+      box-shadow: none;
+      border: 1px solid var(--border);
     }
 
-    .center { display: flex; align-items: center; justify-content: center; height: 100%; }
-
-    .card {
-      width: 380px;
+    .icon-btn {
+      padding: 12px 14px;
+      border-radius: 12px;
       background: var(--panel);
-      border-radius: 22px;
-      padding: 42px;
-      text-align: center;
-      box-shadow: 0 40px 80px rgba(0,0,0,.5);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    input[type=file] { display: none; }
+
+    .file-label {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+      cursor: pointer;
+      font-weight: 600;
+      background: var(--accent-soft);
     }
 
     .input {
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 14px;
       background: #0b0b10;
       border: 1px solid var(--border);
       color: var(--text);
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 15px;
       text-align: center;
       letter-spacing: 2px;
     }
+
+    .input::placeholder { color: var(--muted); letter-spacing: normal; }
+
+    /* ---------- Layout ---------- */
+    .center { display: flex; align-items: center; justify-content: center; height: 100%; }
+
+    .card {
+      background: var(--panel);
+      padding: 42px;
+      border-radius: 22px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.45);
+      text-align: center;
+      width: 380px;
+    }
+
+    h1 { margin: 0 0 10px 0; font-size: 34px; }
+    .accent { color: var(--accent); }
+
+    .muted { color: var(--muted); }
+
+    .stack { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
 
     #workspace { display: none; height: 100vh; }
 
     header {
-      height: 64px;
-      padding: 0 16px;
+      background: var(--panel);
+      padding: 12px 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      background: var(--panel);
+      justify-content: space-between;
       border-bottom: 1px solid var(--border);
     }
 
-    .roomBadge {
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: var(--panel-soft);
-      border: 1px solid var(--border);
-      font-weight: 600;
-      letter-spacing: 2px;
-      color: var(--accent);
-    }
-
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--panel-soft);
-      padding: 6px 10px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-    }
-
-    .profile {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-    }
-
-    .profile.active { border-color: white; }
-
-    .spacer { flex: 1; }
+    header .left, header .right { display: flex; gap: 12px; align-items: center; }
 
     #viewer {
       height: calc(100vh - 64px);
       overflow-y: auto;
+      overflow-x: hidden;
+      padding: 28px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 36px;
-      padding: 32px 0;
     }
 
     .page { position: relative; }
     canvas { display: block; }
+
+    .room-code {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
   </style>
 </head>
 <body>
 
 <div class="center" id="home">
   <div class="card">
-    <h1>Team<span style="color:#b00b55">PDF</span></h1>
-    <p style="color:var(--muted)">Live collaborative PDF annotation</p>
-    <button class="primary" onclick="hostRoom()">Host Session</button>
-    <input id="joinInput" class="input" placeholder="ROOM CODE" />
-    <button class="secondary" onclick="joinRoom()">Join Session</button>
+    <h1>Team<span class="accent">PDF</span></h1>
+    <p class="muted">Live collaborative PDF annotation</p>
+
+    <div class="stack">
+      <button onclick="hostRoom()">Host a Session</button>
+      <input id="joinInput" class="input" placeholder="ROOM CODE" />
+      <button class="secondary" onclick="joinRoom()">Join Session</button>
+    </div>
   </div>
 </div>
 
 <div id="workspace">
   <header>
-    <div class="roomBadge" id="roomCodeLabel"></div>
-
-    <div class="toolbar">
-      <div id="profiles"></div>
-      <input type="color" id="colorPicker" />
-      <button class="icon" id="eraserBtn">🧽</button>
+    <div class="left">
+      <strong>Room</strong> <span class="room-code" id="roomLabel"></span>
     </div>
-
-    <div class="spacer"></div>
-
-    <div id="hostControls" style="display:none; gap:10px; align-items:center">
-      <label class="primary" for="pdfUpload">Upload PDF</label>
-      <input id="pdfUpload" type="file" accept="application/pdf" />
-      <button class="secondary" onclick="downloadAnnotatedPDF()">Download</button>
+    <div class="right">
+      <label class="file-label" for="pdfUpload">Upload PDF</label>
+      <input type="file" id="pdfUpload" accept="application/pdf" />
+      <button class="icon-btn" onclick="downloadAnnotatedPDF()">⬇ PDF</button>
+      <button class="secondary" onclick="leaveRoom()">Leave</button>
     </div>
-
-    <button class="secondary" onclick="leaveRoom()">Leave</button>
   </header>
 
   <div id="viewer"></div>
@@ -213,44 +198,7 @@
 
   let roomCode = null;
   let isHost = false;
-  let erasing = false;
-  let drawListenerAttached = false;
-
-  const profiles = ['#b00b55', '#4fd1c5', '#f6ad55'];
-  let activeProfile = 0;
-
-  const profilesEl = document.getElementById('profiles');
-  const colorPicker = document.getElementById('colorPicker');
-  const eraserBtn = document.getElementById('eraserBtn');
-
-  function renderProfiles() {
-    profilesEl.innerHTML = '';
-    profiles.forEach((c, i) => {
-      const p = document.createElement('div');
-      p.className = 'profile' + (i === activeProfile ? ' active' : '');
-      p.style.background = c;
-      p.onclick = () => {
-        activeProfile = i;
-        erasing = false;
-        eraserBtn.style.opacity = .6;
-        renderProfiles();
-      };
-      profilesEl.appendChild(p);
-    });
-    colorPicker.value = profiles[activeProfile];
-  }
-
-  colorPicker.oninput = e => {
-    profiles[activeProfile] = e.target.value;
-    renderProfiles();
-  };
-
-  eraserBtn.onclick = () => {
-    erasing = !erasing;
-    eraserBtn.style.opacity = erasing ? 1 : .6;
-  };
-
-  renderProfiles();
+  let pdfUrl = null;
 
   window.hostRoom = () => {
     isHost = true;
@@ -269,9 +217,7 @@
   async function startSession() {
     document.getElementById('home').style.display = 'none';
     document.getElementById('workspace').style.display = 'block';
-    document.getElementById('roomCodeLabel').innerText = roomCode;
-
-    if (isHost) document.getElementById('hostControls').style.display = 'flex';
+    document.getElementById('roomLabel').innerText = roomCode;
 
     const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
     const drawRef = ref(db, `rooms/${roomCode}/draw`);
@@ -282,80 +228,78 @@
         if (!file) return;
         const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
         await uploadBytes(fileRef, file);
-        const url = await getDownloadURL(fileRef);
-        await set(pdfRef, url);
-        await renderPDF(url);
-        attachDrawListener(drawRef);
+        pdfUrl = await getDownloadURL(fileRef);
+        await set(pdfRef, pdfUrl);
+        renderPDF(pdfUrl);
       };
     }
 
     const snap = await get(pdfRef);
     if (snap.exists()) {
-      await renderPDF(snap.val());
-      attachDrawListener(drawRef);
+      pdfUrl = snap.val();
+      await renderPDF(pdfUrl);
     }
+
+    onChildAdded(drawRef, snap => drawStroke(snap.val()));
   }
 
-  function attachDrawListener(drawRef) {
-    if (drawListenerAttached) return;
-    drawListenerAttached = true;
-    onChildAdded(drawRef, s => drawStroke(s.val()));
-  }
-
-  function drawStroke(s) {
-    const canvas = document.getElementById(`draw-${s.page}`);
+  function drawStroke({ page, x1, y1, x2, y2 }) {
+    const canvas = document.getElementById(`draw-${page}`);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = s.color;
+    ctx.strokeStyle = '#b00b55';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(s.x1, s.y1);
-    ctx.lineTo(s.x2, s.y2);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
     ctx.stroke();
-    ctx.globalCompositeOperation = 'source-over';
   }
 
   async function renderPDF(url) {
     const viewer = document.getElementById('viewer');
     viewer.innerHTML = '';
+
     const pdf = await pdfjsLib.getDocument(url).promise;
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
-      const vp = page.getViewport({ scale: 1.4 });
+      const viewport = page.getViewport({ scale: 1.4 });
 
-      const wrap = document.createElement('div');
-      wrap.className = 'page';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'page';
 
       const pdfCanvas = document.createElement('canvas');
       const drawCanvas = document.createElement('canvas');
 
-      pdfCanvas.width = drawCanvas.width = vp.width;
-      pdfCanvas.height = drawCanvas.height = vp.height;
+      pdfCanvas.width = drawCanvas.width = viewport.width;
+      pdfCanvas.height = drawCanvas.height = viewport.height;
 
       drawCanvas.id = `draw-${i}`;
       drawCanvas.style.position = 'absolute';
+      drawCanvas.style.top = 0;
+      drawCanvas.style.left = 0;
 
-      wrap.append(pdfCanvas, drawCanvas);
-      viewer.appendChild(wrap);
+      wrapper.appendChild(pdfCanvas);
+      wrapper.appendChild(drawCanvas);
+      viewer.appendChild(wrapper);
 
-      await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport: vp }).promise;
+      await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport }).promise;
+
       if (isHost) enableDrawing(drawCanvas, i);
     }
   }
 
   function enableDrawing(canvas, page) {
     let drawing = false;
-    let lx, ly;
+    let lastX, lastY;
     const drawRef = ref(db, `rooms/${roomCode}/draw`);
 
     canvas.onmousedown = e => {
       drawing = true;
       const r = canvas.getBoundingClientRect();
-      lx = e.clientX - r.left;
-      ly = e.clientY - r.top;
+      lastX = e.clientX - r.left;
+      lastY = e.clientY - r.top;
     };
 
     canvas.onmouseup = canvas.onmouseleave = () => drawing = false;
@@ -365,39 +309,42 @@
       const r = canvas.getBoundingClientRect();
       const x = e.clientX - r.left;
       const y = e.clientY - r.top;
-      push(drawRef, {
-        page,
-        x1: lx,
-        y1: ly,
-        x2: x,
-        y2: y,
-        color: profiles[activeProfile],
-        erase: erasing
-      });
-      lx = x; ly = y;
+      push(drawRef, { page, x1: lastX, y1: lastY, x2: x, y2: y });
+      lastX = x;
+      lastY = y;
     };
   }
 
   window.downloadAnnotatedPDF = async () => {
-    const snap = await get(ref(db, `rooms/${roomCode}/pdf`));
-    if (!snap.exists()) return;
+    if (!pdfUrl) return alert('No PDF loaded');
 
-    const bytes = await fetch(snap.val()).then(r => r.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+    const existingPdfBytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
+    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
 
-    for (let i = 0; i < pdfDoc.getPageCount(); i++) {
-      const page = pdfDoc.getPage(i);
+    const pages = pdfDoc.getPages();
+
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
       const canvas = document.getElementById(`draw-${i + 1}`);
       if (!canvas) continue;
+
       const png = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
-      page.drawImage(png, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+      const { width, height } = page.getSize();
+
+      page.drawImage(png, {
+        x: 0,
+        y: 0,
+        width,
+        height
+      });
     }
 
-    const out = await pdfDoc.save();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
-    a.download = `TeamPDF-${roomCode}.pdf`;
-    a.click();
+    const bytes = await pdfDoc.save();
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `TeamPDF-${roomCode}.pdf`;
+    link.click();
   };
 </script>
 </body>
