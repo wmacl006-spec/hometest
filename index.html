@@ -11,7 +11,6 @@
       --bg: #0e0e11;
       --panel: #16161b;
       --border: #2a2a33;
-      --muted: #9a9aa6;
       --danger: #ff5f5f;
     }
 
@@ -21,7 +20,7 @@
       margin: 0;
       background: var(--bg);
       color: #fff;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: system-ui, sans-serif;
       overflow: hidden;
     }
 
@@ -35,12 +34,6 @@
       padding: 0 16px;
     }
 
-    h1 {
-      font-size: 16px;
-      margin: 0;
-      font-weight: 600;
-    }
-
     .spacer { flex: 1; }
 
     button, input {
@@ -49,37 +42,18 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px 14px;
-      font-size: 14px;
       cursor: pointer;
     }
 
-    button.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
+    button.primary { background: var(--accent); border-color: var(--accent); }
+    button.danger { border-color: var(--danger); color: var(--danger); }
 
-    button.danger {
-      border-color: var(--danger);
-      color: var(--danger);
-      background: transparent;
-    }
-
-    button.tool.active {
-      outline: 2px solid var(--accent);
-    }
+    button.tool.active { outline: 2px solid var(--accent); }
 
     input[type="color"] {
-      padding: 0;
       width: 36px;
       height: 36px;
-    }
-
-    .pill {
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(176,11,85,0.15);
-      border: 1px solid rgba(176,11,85,0.4);
-      font-size: 13px;
+      padding: 0;
     }
 
     #viewer {
@@ -94,7 +68,7 @@
 
     .page {
       position: relative;
-      margin: 0 auto 32px auto;
+      margin: 0 auto 32px;
       width: fit-content;
     }
 
@@ -119,16 +93,15 @@
       border-radius: 16px;
       padding: 10px;
       display: none;
-      gap: 8px;
-      align-items: center;
       flex-direction: column;
+      gap: 8px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
     .color-history {
       display: flex;
       gap: 6px;
-      margin-bottom: 6px;
+      justify-content: center;
     }
 
     .color-swatch {
@@ -167,15 +140,15 @@
 <div id="eraserCursor"></div>
 
 <header>
-  <h1>Live PDF Classroom</h1>
+  <strong>Live PDF Classroom</strong>
 
   <div id="lobbyUI">
-    <button id="createRoom" class="primary">Create room</button>
+    <button id="createRoom" class="primary">Create</button>
     <input id="roomInput" placeholder="Room code" />
     <button id="joinRoom">Join</button>
   </div>
 
-  <span id="roomLabel" class="pill hidden"></span>
+  <span id="roomLabel" class="hidden"></span>
 
   <div class="spacer"></div>
 
