@@ -226,25 +226,9 @@ input#joinInput:focus {
   align-items:center;
 }
 
+#workspace header button,
 #uploadControls label {
-  background: #b00b55;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all var(--transition);
-}
-
-#uploadControls label:hover {
-  background: #d4146a; /* lighter hover */
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255, 0, 90, 0.4);
-}
-
-
-#workspace header button {
-  background: #b00b55;
+  background: #b00b55; /* accent color */
   color: white;
   padding: 8px 14px;
   border-radius: 12px;
@@ -252,13 +236,16 @@ input#joinInput:focus {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition);
+  text-align: center;
 }
 
-#workspace header button:hover {
-  background: #d4146a; /* lighter on hover */
+#workspace header button:hover,
+#uploadControls label:hover {
+  background: #d4146a; /* lighter hover */
   transform: scale(1.05);
   box-shadow: 0 6px 20px rgba(255, 0, 90, 0.4);
 }
+
 
 
 </style>
