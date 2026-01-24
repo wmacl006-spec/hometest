@@ -226,9 +226,10 @@ input#joinInput:focus {
   align-items:center;
 }
 
+/* Unified style for header buttons and upload label */
 #workspace header button,
 #uploadControls label {
-  background: #b00b55; /* accent color */
+  background: #b00b55;       /* accent color */
   color: white;
   padding: 8px 14px;
   border-radius: 12px;
@@ -237,16 +238,17 @@ input#joinInput:focus {
   cursor: pointer;
   transition: all var(--transition);
   text-align: center;
+  display: inline-flex;       /* ensures transform works properly */
+  align-items: center;
+  justify-content: center;
 }
 
 #workspace header button:hover,
 #uploadControls label:hover {
-  background: #d4146a; /* lighter hover */
-  transform: scale(1.05);
+  background: #d4146a;       /* lighter hover */
+  transform: scale(1.05);     /* match the inflate effect */
   box-shadow: 0 6px 20px rgba(255, 0, 90, 0.4);
 }
-
-
 
 </style>
 </head>
