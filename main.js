@@ -44,22 +44,16 @@ const eraserCursor = document.getElementById("eraserCursor");
 const downloadBtn = document.getElementById("downloadPdf");
 const colorHistoryEl = document.getElementById("colorHistory");
 
-// ---------- Draw State ----------
-const drawState = {
-  tool: "pen",
-  color: "#b00b55"
-};
-
+// ---------- State ----------
+const drawState = { tool: "pen", color: "#b00b55" };
 const colorHistory = [drawState.color];
 const clientId = crypto.randomUUID();
 
-// ---------- Room State ----------
 let roomId = null;
 let isTeacher = false;
 let pdfDoc = null;
-let unsubRoom = null;
-let unsubAnnotations = null;
 let annotationsLoaded = false;
+let unsubRoom, unsubAnnotations;
 
 // ---------- UI ----------
 function enterRoomUI() {
@@ -70,6 +64,7 @@ function enterRoomUI() {
   if (isTeacher) {
     uploadBtn.classList.remove("hidden");
     toolbar.style.display = "flex";
+    renderColorHistory(); // FIX #1
   }
 }
 
@@ -84,30 +79,24 @@ function exitRoomUI() {
 // ---------- Color History ----------
 function renderColorHistory() {
   colorHistoryEl.innerHTML = "";
-
-  colorHistory.forEach((color, i) => {
-    const swatch = document.createElement("div");
-    swatch.className = "color-swatch" + (i === 0 ? " active" : "");
-    swatch.style.background = color;
-    swatch.onclick = () => setActiveColor(color);
-    colorHistoryEl.appendChild(swatch);
+  colorHistory.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "color-swatch" + (i === 0 ? " active" : "");
+    d.style.background = c;
+    d.onclick = () => setActiveColor(c);
+    colorHistoryEl.appendChild(d);
   });
 }
 
-function setActiveColor(color) {
-  drawState.color = color;
-  colorPicker.value = color;
-
-  const i = colorHistory.indexOf(color);
+function setActiveColor(c) {
+  drawState.color = c;
+  colorPicker.value = c;
+  const i = colorHistory.indexOf(c);
   if (i !== -1) colorHistory.splice(i, 1);
-
-  colorHistory.unshift(color);
+  colorHistory.unshift(c);
   if (colorHistory.length > 5) colorHistory.length = 5;
-
   renderColorHistory();
 }
-
-renderColorHistory();
 
 colorPicker.oninput = e => setActiveColor(e.target.value);
 
@@ -126,62 +115,46 @@ eraserBtn.onclick = () => {
   eraserCursor.style.display = "block";
 };
 
-// ---------- Upload ----------
-uploadBtn.onclick = () => pdfUpload.click();
-
-// ---------- Create Room ----------
+// ---------- Room ----------
 document.getElementById("createRoom").onclick = async () => {
   roomId = crypto.randomUUID().slice(0, 6);
   isTeacher = true;
-
   await setDoc(doc(db, "rooms", roomId), { createdAt: Date.now() });
-
   roomLabel.textContent = `Room ${roomId}`;
   enterRoomUI();
 };
 
-// ---------- Join Room ----------
 document.getElementById("joinRoom").onclick = async () => {
-  roomId = document.getElementById("roomInput").value.trim();
+  roomId = roomInput.value.trim();
   if (!roomId) return;
-
   isTeacher = false;
   roomLabel.textContent = `Room ${roomId}`;
   enterRoomUI();
 
   const snap = await getDoc(doc(db, "rooms", roomId));
-  if (snap.exists() && snap.data().pdfUrl) {
-    await loadPDF(snap.data().pdfUrl);
-    await loadAnnotationHistory();
-  }
+  if (snap.exists() && snap.data().pdfUrl) loadPDF(snap.data().pdfUrl);
 
   listenRoom();
   listenAnnotations();
 };
 
-// ---------- Leave ----------
 leaveBtn.onclick = () => {
   unsubRoom?.();
   unsubAnnotations?.();
   viewer.innerHTML = "";
-  roomId = null;
-  pdfDoc = null;
   exitRoomUI();
 };
 
-// ---------- Upload PDF ----------
+// ---------- Upload ----------
+uploadBtn.onclick = () => pdfUpload.click();
+
 pdfUpload.onchange = async e => {
-  if (!isTeacher) return;
-
   const file = e.target.files[0];
-  const pdfRef = ref(storage, `pdfs/${roomId}.pdf`);
-  await uploadBytes(pdfRef, file);
-
-  const url = await getDownloadURL(pdfRef);
+  const refPdf = ref(storage, `pdfs/${roomId}.pdf`);
+  await uploadBytes(refPdf, file);
+  const url = await getDownloadURL(refPdf);
   await updateDoc(doc(db, "rooms", roomId), { pdfUrl: url });
-
   await loadPDF(url);
-  await loadAnnotationHistory();
   listenRoom();
   listenAnnotations();
 };
@@ -189,9 +162,8 @@ pdfUpload.onchange = async e => {
 // ---------- Firestore ----------
 function listenRoom() {
   unsubRoom?.();
-  unsubRoom = onSnapshot(doc(db, "rooms", roomId), snap => {
-    const d = snap.data();
-    if (d?.pdfUrl && !pdfDoc) loadPDF(d.pdfUrl);
+  unsubRoom = onSnapshot(doc(db, "rooms", roomId), s => {
+    if (s.data()?.pdfUrl && !pdfDoc) loadPDF(s.data().pdfUrl);
   });
 }
 
@@ -199,18 +171,16 @@ function listenAnnotations() {
   unsubAnnotations?.();
   unsubAnnotations = onSnapshot(
     collection(db, "rooms", roomId, "annotations"),
-    snap => {
+    s => {
       if (!annotationsLoaded) return;
-      snap.docChanges().forEach(c => {
-        if (c.type === "added" && c.doc.data().clientId !== clientId) {
-          drawAnnotation(c.doc.data());
-        }
+      s.docChanges().forEach(c => {
+        if (c.doc.data().clientId !== clientId) drawAnnotation(c.doc.data());
       });
     }
   );
 }
 
-// ---------- Load PDF ----------
+// ---------- PDF ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
   pdfDoc = await pdfjsLib.getDocument(url).promise;
@@ -219,32 +189,32 @@ async function loadPDF(url) {
     const page = await pdfDoc.getPage(i);
     const vp = page.getViewport({ scale: 1.4 });
 
-    const pageDiv = document.createElement("div");
-    pageDiv.className = "page";
+    const wrap = document.createElement("div");
+    wrap.className = "page";
 
     const base = document.createElement("canvas");
     const overlay = document.createElement("canvas");
 
     base.width = overlay.width = vp.width;
     base.height = overlay.height = vp.height;
-
     overlay.className = "overlay";
 
-    pageDiv.append(base, overlay);
-    viewer.appendChild(pageDiv);
+    wrap.append(base, overlay);
+    viewer.appendChild(wrap);
 
     await page.render({ canvasContext: base.getContext("2d"), viewport: vp }).promise;
     setupDrawing(overlay, i);
   }
+
+  annotationsLoaded = true;
 }
 
 // ---------- Drawing ----------
 function setupDrawing(canvas, page) {
   if (!isTeacher) return;
-
   const ctx = canvas.getContext("2d");
   let drawing = false;
-  let points = [];
+  let pts = [];
 
   const pos = e => {
     const r = canvas.getBoundingClientRect();
@@ -256,26 +226,20 @@ function setupDrawing(canvas, page) {
 
   canvas.onmousedown = e => {
     drawing = true;
-    points = [];
+    pts = [];
     const p = pos(e);
     ctx.beginPath();
     ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
-    points.push(p);
+    pts.push(p);
   };
 
   canvas.onmousemove = e => {
-    if (drawState.tool === "eraser") {
-      eraserCursor.style.left = `${e.clientX}px`;
-      eraserCursor.style.top = `${e.clientY}px`;
-    }
     if (!drawing) return;
-
     const p = pos(e);
-    points.push(p);
+    pts.push(p);
 
     ctx.globalCompositeOperation =
       drawState.tool === "eraser" ? "destination-out" : "source-over";
-
     ctx.strokeStyle = drawState.color;
     ctx.lineWidth = drawState.tool === "eraser" ? 24 : 2;
     ctx.lineCap = "round";
@@ -287,31 +251,30 @@ function setupDrawing(canvas, page) {
   canvas.onmouseup = async () => {
     drawing = false;
     ctx.globalCompositeOperation = "source-over";
-    if (points.length < 2) return;
+    if (pts.length < 2) return;
 
     await addDoc(collection(db, "rooms", roomId, "annotations"), {
       page,
-      points,
+      points: pts,
       tool: drawState.tool,
       color: drawState.color,
-      createdAt: Date.now(),
-      clientId
+      clientId,
+      createdAt: Date.now()
     });
   };
 }
 
-// ---------- Draw Annotation ----------
+// ---------- Draw ----------
 function drawAnnotation(a) {
-  const pageDiv = viewer.children[a.page - 1];
-  if (!pageDiv) return;
+  const page = viewer.children[a.page - 1];
+  if (!page) return;
 
-  const canvas = pageDiv.querySelector(".overlay");
+  const canvas = page.querySelector(".overlay");
   const ctx = canvas.getContext("2d");
 
   ctx.beginPath();
   ctx.globalCompositeOperation =
     a.tool === "eraser" ? "destination-out" : "source-over";
-
   ctx.strokeStyle = a.color;
   ctx.lineWidth = a.tool === "eraser" ? 24 : 2;
   ctx.lineCap = "round";
@@ -326,17 +289,21 @@ function drawAnnotation(a) {
   ctx.globalCompositeOperation = "source-over";
 }
 
-// ---------- Download ----------
+// ---------- Download (FIX #2) ----------
 downloadBtn.onclick = () => {
   if (!pdfDoc) return;
 
   const { jsPDF } = window.jspdf;
-  const pages = viewer.querySelectorAll(".page");
+  const pages = document.querySelectorAll(".page");
+  const dpr = window.devicePixelRatio || 1;
   let pdf;
 
   pages.forEach((p, i) => {
     const base = p.children[0];
     const overlay = p.children[1];
+
+    const w = base.width / dpr;
+    const h = base.height / dpr;
 
     const merged = document.createElement("canvas");
     merged.width = base.width;
@@ -346,15 +313,20 @@ downloadBtn.onclick = () => {
     ctx.drawImage(base, 0, 0);
     ctx.drawImage(overlay, 0, 0);
 
-    const img = merged.toDataURL("image/png");
-
     if (i === 0) {
-      pdf = new jsPDF({ unit: "px", format: [merged.width, merged.height] });
+      pdf = new jsPDF({ unit: "px", format: [w, h] });
     } else {
-      pdf.addPage([merged.width, merged.height]);
+      pdf.addPage([w, h]);
     }
 
-    pdf.addImage(img, "PNG", 0, 0, merged.width, merged.height);
+    pdf.addImage(
+      merged.toDataURL("image/png"),
+      "PNG",
+      0,
+      0,
+      w,
+      h
+    );
   });
 
   pdf.save(`room-${roomId}.pdf`);
