@@ -5,156 +5,184 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TeamPDF</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+
+  <!-- PDF-lib -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
   <style>
     :root {
       --bg: #0e0e11;
       --panel: #16161c;
+      --panel-soft: #1c1c25;
       --accent: #b00b55;
-      --text: #f2f2f2;
+      --text: #f3f3f4;
       --muted: #9a9aa3;
-      --border: #262633;
+      --border: #2a2a36;
     }
 
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
     body {
       margin: 0;
+      height: 100vh;
       background: radial-gradient(circle at top, #1a1a22, var(--bg));
       color: var(--text);
-      height: 100vh;
       overflow: hidden;
     }
 
+    /* ---------- Base UI ---------- */
     button {
-      background: linear-gradient(135deg, var(--accent), #d4146a);
       border: none;
-      color: white;
-      padding: 12px 16px;
+      cursor: pointer;
       border-radius: 12px;
       font-weight: 600;
-      cursor: pointer;
-      transition: transform .08s ease, box-shadow .08s ease;
-      box-shadow: 0 8px 20px rgba(176,11,85,.35);
+      padding: 12px 16px;
+      transition: transform .08s ease, opacity .08s ease;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), #d4146a);
+      color: white;
+      box-shadow: 0 10px 30px rgba(176,11,85,.35);
     }
 
     button.secondary {
       background: transparent;
-      box-shadow: none;
+      color: var(--text);
       border: 1px solid var(--border);
     }
 
     button.icon {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      box-shadow: none;
       padding: 10px 12px;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); opacity: .9; }
+
+    input[type=file] { display: none; }
+
+    input[type=color] {
+      width: 36px;
+      height: 36px;
+      border: none;
+      padding: 0;
+      background: none;
+      cursor: pointer;
     }
 
     .center { display: flex; align-items: center; justify-content: center; height: 100%; }
 
     .card {
-      background: var(--panel);
-      padding: 42px;
-      border-radius: 22px;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.45);
-      text-align: center;
       width: 380px;
+      background: var(--panel);
+      border-radius: 22px;
+      padding: 42px;
+      text-align: center;
+      box-shadow: 0 40px 80px rgba(0,0,0,.5);
     }
 
     .input {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
       background: #0b0b10;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 14px 16px;
-      border-radius: 14px;
-      font-size: 15px;
       text-align: center;
       letter-spacing: 2px;
     }
 
+    /* ---------- Workspace ---------- */
     #workspace { display: none; height: 100vh; }
 
     header {
-      background: var(--panel);
-      padding: 10px 16px;
+      height: 64px;
+      padding: 0 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: var(--panel);
       border-bottom: 1px solid var(--border);
     }
 
     .toolbar {
       display: flex;
-      gap: 10px;
       align-items: center;
-      background: #0f0f14;
-      padding: 6px 10px;
-      border-radius: 14px;
+      gap: 10px;
+      background: var(--panel-soft);
+      padding: 8px 12px;
+      border-radius: 16px;
       border: 1px solid var(--border);
     }
 
     .profile {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      border: 2px solid transparent;
       cursor: pointer;
+      border: 2px solid transparent;
     }
 
     .profile.active { border-color: white; }
 
-    input[type=color] {
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border: none;
-      background: none;
-      cursor: pointer;
-    }
+    .spacer { flex: 1; }
 
     #viewer {
-      height: calc(100vh - 60px);
+      height: calc(100vh - 64px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 36px;
-      padding: 28px 0;
+      padding: 32px 0;
     }
 
     .page { position: relative; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
 
+<!-- ---------- Home ---------- -->
 <div class="center" id="home">
   <div class="card">
     <h1>Team<span style="color:#b00b55">PDF</span></h1>
-    <p class="muted">Live collaborative PDF annotation</p>
-    <button onclick="hostRoom()">Host Session</button>
+    <p style="color:var(--muted)">Live collaborative PDF annotation</p>
+    <button class="primary" onclick="hostRoom()">Host Session</button>
     <input id="joinInput" class="input" placeholder="ROOM CODE" />
-    <button class="secondary" onclick="joinRoom()">Join</button>
+    <button class="secondary" onclick="joinRoom()">Join Session</button>
   </div>
 </div>
 
+<!-- ---------- Workspace ---------- -->
 <div id="workspace">
   <header>
     <div class="toolbar">
       <div id="profiles"></div>
       <input type="color" id="colorPicker" />
-      <button class="icon" onclick="toggleEraser()">🧽</button>
+      <button class="icon" id="eraserBtn">🧽</button>
     </div>
-    <div>
-      <button class="secondary" onclick="downloadAnnotatedPDF()">⬇ PDF</button>
-      <button class="secondary" onclick="leaveRoom()">Leave</button>
+
+    <div class="spacer"></div>
+
+    <div id="hostControls" style="display:none; gap:10px; display:flex">
+      <label class="primary" for="pdfUpload" style="padding:10px 16px; border-radius:12px; cursor:pointer">Upload PDF</label>
+      <input id="pdfUpload" type="file" accept="application/pdf" />
+      <button class="secondary" onclick="downloadAnnotatedPDF()">Download</button>
     </div>
+
+    <button class="secondary" onclick="leaveRoom()">Leave</button>
   </header>
+
   <div id="viewer"></div>
 </div>
 
@@ -179,74 +207,82 @@
   const db = getDatabase(app);
   const storage = getStorage(app);
 
-  let roomCode, isHost = false;
-  let currentProfile = 0;
+  let roomCode = null;
+  let isHost = false;
   let erasing = false;
 
   const profiles = ['#b00b55', '#4fd1c5', '#f6ad55'];
+  let activeProfile = 0;
 
-  function buildProfiles() {
-    const wrap = document.getElementById('profiles');
-    wrap.innerHTML = '';
+  /* ---------- Toolbar ---------- */
+  const profilesEl = document.getElementById('profiles');
+  const colorPicker = document.getElementById('colorPicker');
+  const eraserBtn = document.getElementById('eraserBtn');
+
+  function renderProfiles() {
+    profilesEl.innerHTML = '';
     profiles.forEach((c, i) => {
-      const d = document.createElement('div');
-      d.className = 'profile' + (i === currentProfile ? ' active' : '');
-      d.style.background = c;
-      d.onclick = () => selectProfile(i);
-      wrap.appendChild(d);
+      const p = document.createElement('div');
+      p.className = 'profile' + (i === activeProfile ? ' active' : '');
+      p.style.background = c;
+      p.onclick = () => {
+        activeProfile = i;
+        erasing = false;
+        eraserBtn.style.opacity = .6;
+        renderProfiles();
+      };
+      profilesEl.appendChild(p);
     });
-    document.getElementById('colorPicker').value = profiles[currentProfile];
+    colorPicker.value = profiles[activeProfile];
   }
 
-  function selectProfile(i) {
-    currentProfile = i;
-    erasing = false;
-    buildProfiles();
-  }
-
-  window.toggleEraser = () => erasing = !erasing;
-
-  document.getElementById('colorPicker').oninput = e => {
-    profiles[currentProfile] = e.target.value;
-    buildProfiles();
+  colorPicker.oninput = e => {
+    profiles[activeProfile] = e.target.value;
+    renderProfiles();
   };
 
-  buildProfiles();
+  eraserBtn.onclick = () => {
+    erasing = !erasing;
+    eraserBtn.style.opacity = erasing ? 1 : .6;
+  };
 
+  renderProfiles();
+
+  /* ---------- Navigation ---------- */
   window.hostRoom = () => {
     isHost = true;
-    roomCode = Math.random().toString(36).substring(2,7).toUpperCase();
-    start();
+    roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    startSession();
   };
 
   window.joinRoom = () => {
     roomCode = document.getElementById('joinInput').value.toUpperCase();
     if (!roomCode) return;
-    start();
+    startSession();
   };
 
   window.leaveRoom = () => location.reload();
 
-  async function start() {
+  /* ---------- Session ---------- */
+  async function startSession() {
     document.getElementById('home').style.display = 'none';
     document.getElementById('workspace').style.display = 'block';
+
+    if (isHost) document.getElementById('hostControls').style.display = 'flex';
 
     const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
     const drawRef = ref(db, `rooms/${roomCode}/draw`);
 
     if (isHost) {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'application/pdf';
-      input.onchange = async e => {
+      document.getElementById('pdfUpload').onchange = async e => {
         const file = e.target.files[0];
-        const s = sRef(storage, `pdfs/${roomCode}.pdf`);
-        await uploadBytes(s, file);
-        const url = await getDownloadURL(s);
+        if (!file) return;
+        const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
+        await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(fileRef);
         await set(pdfRef, url);
         renderPDF(url);
       };
-      input.click();
     }
 
     const snap = await get(pdfRef);
@@ -255,10 +291,11 @@
     onChildAdded(drawRef, s => drawStroke(s.val()));
   }
 
+  /* ---------- Drawing ---------- */
   function drawStroke(s) {
-    const c = document.getElementById(`draw-${s.page}`);
-    if (!c) return;
-    const ctx = c.getContext('2d');
+    const canvas = document.getElementById(`draw-${s.page}`);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
     ctx.strokeStyle = s.color;
     ctx.lineWidth = 3;
@@ -278,52 +315,81 @@
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const vp = page.getViewport({ scale: 1.4 });
+
       const wrap = document.createElement('div');
       wrap.className = 'page';
 
-      const pdfC = document.createElement('canvas');
-      const drawC = document.createElement('canvas');
-      pdfC.width = drawC.width = vp.width;
-      pdfC.height = drawC.height = vp.height;
-      drawC.id = `draw-${i}`;
-      drawC.style.position = 'absolute';
+      const pdfCanvas = document.createElement('canvas');
+      const drawCanvas = document.createElement('canvas');
 
-      wrap.append(pdfC, drawC);
+      pdfCanvas.width = drawCanvas.width = vp.width;
+      pdfCanvas.height = drawCanvas.height = vp.height;
+
+      drawCanvas.id = `draw-${i}`;
+      drawCanvas.style.position = 'absolute';
+      drawCanvas.style.top = 0;
+      drawCanvas.style.left = 0;
+
+      wrap.append(pdfCanvas, drawCanvas);
       viewer.appendChild(wrap);
 
-      await page.render({ canvasContext: pdfC.getContext('2d'), viewport: vp }).promise;
-      if (isHost) enableDraw(drawC, i);
+      await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport: vp }).promise;
+      if (isHost) enableDrawing(drawCanvas, i);
     }
   }
 
-  function enableDraw(c, page) {
-    let d=false,lx,ly;
-    const dr = ref(db, `rooms/${roomCode}/draw`);
-    c.onmousedown=e=>{d=true;const r=c.getBoundingClientRect();lx=e.clientX-r.left;ly=e.clientY-r.top};
-    c.onmouseup=c.onmouseleave=()=>d=false;
-    c.onmousemove=e=>{
-      if(!d)return;
-      const r=c.getBoundingClientRect();
-      const x=e.clientX-r.left,y=e.clientY-r.top;
-      push(dr,{page,x1:lx,y1:ly,x2:x,y2:y,color:profiles[currentProfile],erase:erasing});
-      lx=x;ly=y;
+  function enableDrawing(canvas, page) {
+    let drawing = false;
+    let lx, ly;
+    const drawRef = ref(db, `rooms/${roomCode}/draw`);
+
+    canvas.onmousedown = e => {
+      drawing = true;
+      const r = canvas.getBoundingClientRect();
+      lx = e.clientX - r.left;
+      ly = e.clientY - r.top;
+    };
+
+    canvas.onmouseup = canvas.onmouseleave = () => drawing = false;
+
+    canvas.onmousemove = e => {
+      if (!drawing) return;
+      const r = canvas.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      push(drawRef, {
+        page,
+        x1: lx,
+        y1: ly,
+        x2: x,
+        y2: y,
+        color: profiles[activeProfile],
+        erase: erasing
+      });
+      lx = x; ly = y;
     };
   }
 
+  /* ---------- Export ---------- */
   window.downloadAnnotatedPDF = async () => {
     const snap = await get(ref(db, `rooms/${roomCode}/pdf`));
-    if (!snap.exists()) return;
-    const bytes = await fetch(snap.val()).then(r=>r.arrayBuffer());
-    const pdf = await PDFLib.PDFDocument.load(bytes);
-    pdf.getPages().forEach((p,i)=>{
-      const c=document.getElementById(`draw-${i+1}`);
-      if(!c)return;
-      p.drawImage(pdf.embedPng(c.toDataURL()),{x:0,y:0,width:p.getWidth(),height:p.getHeight()});
-    });
-    const out=await pdf.save();
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([out],{type:'application/pdf'}));
-    a.download=`TeamPDF-${roomCode}.pdf`;
+    if (!snap.exists()) return alert('No PDF');
+
+    const bytes = await fetch(snap.val()).then(r => r.arrayBuffer());
+    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+
+    for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+      const page = pdfDoc.getPage(i);
+      const canvas = document.getElementById(`draw-${i + 1}`);
+      if (!canvas) continue;
+      const png = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
+      page.drawImage(png, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+    }
+
+    const out = await pdfDoc.save();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
+    a.download = `TeamPDF-${roomCode}.pdf`;
     a.click();
   };
 </script>
