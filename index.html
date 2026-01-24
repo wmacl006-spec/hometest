@@ -19,8 +19,6 @@
   --accent-hover:#d4146a;
   --border:#262633;
   --text:#f2f2f2;
-  --shadow:0 10px 30px rgba(0,0,0,0.5);
-  --transition:0.3s ease;
 }
 
 * { box-sizing:border-box; font-family:Inter,sans-serif; }
@@ -33,35 +31,75 @@ body {
   overflow:hidden;
 }
 
-/* ---------- Layout ---------- */
+/* ---------- Home ---------- */
+#home {
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.card {
+  background:var(--panel);
+  padding:40px;
+  border-radius:20px;
+  width:360px;
+  text-align:center;
+}
+
+button {
+  background:var(--accent);
+  border:none;
+  color:white;
+  padding:12px;
+  border-radius:12px;
+  width:100%;
+  cursor:pointer;
+  font-weight:600;
+}
+
+button.secondary {
+  background:none;
+  border:2px solid var(--accent);
+  color:var(--accent);
+  margin-top:12px;
+}
+
+input {
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#111;
+  color:white;
+  margin:12px 0;
+}
+
+/* ---------- Workspace ---------- */
 #workspace { display:none; height:100vh; }
 
 header {
-  height:64px;
+  height:60px;
   background:var(--panel);
-  padding:12px 24px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
   border-bottom:1px solid var(--border);
-  box-shadow: var(--shadow);
-  font-weight:500;
 }
 
 #viewer {
-  height:calc(100vh - 64px);
+  height:calc(100vh - 60px);
   overflow-y:auto;
-  padding:24px 0;
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:32px;
+  padding:20px;
+  gap:30px;
 }
 
-/* ---------- PDF Layers (original look) ---------- */
 .page {
   position:relative;
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
 }
 
 .pdf-layer { position:relative; z-index:1; }
@@ -73,43 +111,29 @@ header {
 
 /* ---------- Toolbar ---------- */
 #toolbar {
-  display: none; /* hide for everyone initially */
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: 24px;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 999;
-  box-shadow: var(--shadow);
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:var(--panel);
+  padding:12px;
+  border-radius:18px;
+  display:none;
+  flex-direction:column;
+  gap:10px;
+  z-index:1000;
 }
-
-
 
 .tool-row {
   display:flex;
-  gap:12px;
+  gap:10px;
 }
 
 .tool {
-  width:40px;
-  height:40px;
+  width:36px;
+  height:36px;
   border-radius:50%;
-  border:2px solid var(--border);
   cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:600;
-  transition: all var(--transition);
-}
-
-.tool:hover {
-  transform:scale(1.1);
-  border-color:var(--accent);
+  border:2px solid var(--border);
 }
 
 .tool.active {
@@ -117,735 +141,297 @@ header {
 }
 
 .tool.eraser {
-  border-radius:12px;
+  border-radius:10px;
   background:#111;
   color:white;
-}
-
-input[type=color] {
-  width:40px;
-  height:40px;
-  border:none;
-  cursor:pointer;
-  border-radius:50%;
-  padding:0;
-  transition: all var(--transition);
-}
-
-input[type=color]:hover { transform:scale(1.1); }
-
-input[type=range] {
-  width:160px;
-  accent-color:var(--accent);
-}
-
-/* ---------- Home ---------- */
-.center {
   display:flex;
   align-items:center;
   justify-content:center;
-  height:100%;
-  background:linear-gradient(135deg,#111,#1a1a27);
 }
 
-.card {
-  background:var(--panel);
-  padding:50px 40px;
-  border-radius:24px;
-  width:380px;
-  text-align:center;
-  box-shadow:var(--shadow);
-  transition: transform var(--transition);
-}
-
-.card:hover { transform:translateY(-6px); }
-
-.card h1 {
-  font-size:2.5rem;
-  margin-bottom:24px;
-}
-
-button {
-  background:linear-gradient(135deg,#b00b55,#d4146a);
+input[type=color] {
+  width:36px;
+  height:36px;
   border:none;
-  color:white;
-  padding:14px 20px;
-  border-radius:16px;
-  font-weight:600;
-  cursor:pointer;
-  transition: all var(--transition);
-  font-size:1rem;
-  width:100%;
+  border-radius:50%;
 }
 
-button:hover {
-  background:linear-gradient(135deg,#d4146a,#ff3a7a);
-  transform:translateY(-2px) scale(1.02);
-  box-shadow:0 8px 20px rgba(255,0,90,0.4);
+input[type=range] {
+  width:140px;
 }
 
-button.secondary {
-  background:transparent;
-  border:2px solid var(--accent);
-  color:var(--accent);
-  font-weight:600;
-  margin-top:12px;
-  transition: all var(--transition);
-}
-
-button.secondary:hover {
-  background:var(--accent);
-  color:white;
-  transform:translateY(-2px);
-  box-shadow:0 8px 20px rgba(255,0,90,0.3);
-}
-
-input#joinInput {
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  margin-bottom:12px;
-  background:#111;
-  color:white;
-  font-weight:500;
-  text-align:center;
-  transition: all var(--transition);
-}
-
-input#joinInput:focus {
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 10px rgba(255,0,90,0.5);
-}
-
-/* ---------- Upload/Download Buttons Side by Side ---------- */
-#workspace header > div:last-child {
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-
-/* Unified style for header buttons and upload label */
-#workspace header button,
-#uploadControls label {
-  background: #b00b55;       /* accent color */
-  color: white;
-  padding: 8px 14px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition);
-  text-align: center;
-  display: inline-flex;       /* ensures transform works properly */
-  align-items: center;
-  justify-content: center;
-}
-
-#workspace header button:hover,
-#uploadControls label:hover {
-  background: #d4146a;       /* lighter hover */
-  transform: scale(1.05);     /* match the inflate effect */
-  box-shadow: 0 6px 20px rgba(255, 0, 90, 0.4);
-}
-
- /* ---------- Chat Panel ---------- */
-#chatPanel {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  width: 260px;
-  height: 400px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow);
-  font-size: 0.9rem;
-  overflow: hidden;
-  z-index: 1000;
-  display: none; /* hidden by default until joining/hosting */
-}
-
-/* Header */
-#chatHeader {
-  background: var(--accent);
-  color: white;
-  padding: 8px 12px;
-  font-weight: 600;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  text-align: center;
-}
-
-/* Chat messages scrollable area */
-#chatMessages {
-  flex: 1;
-  padding: 8px;
-  overflow-y: auto;
-  background: #111;
-  word-break: break-word;
-}
-
-/* Individual chat message */
-.chatMessage {
-  margin-bottom: 6px;
-}
-
-.chatMessage strong {
-  color: var(--accent);
-}
-
-/* Input for name and message */
-#chatName,
-#chatInput {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #111;
-  color: white;
-  margin-bottom: 6px;
-  box-sizing: border-box;
-}
-
-#chatName:focus,
-#chatInput:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 6px rgba(255, 0, 90, 0.5);
-}
-
-#chatInput:disabled {
-  opacity: 0.5;
-}
-
-/* Container for buttons */
-#chatInputContainer {
-  display: flex;
-  gap: 6px;
-  justify-content: space-between;
-}
-
-/* Buttons */
-#chatInputContainer button {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  background: var(--accent);
-  color: white;
-  font-size: 0.9rem;
-  transition: all var(--transition);
-  text-align: center;
-}
-
-#chatInputContainer button:hover {
-  background: var(--accent-hover);
-}
-
-/* Optional: make "Send" slightly smaller */
-#chatSend {
-  flex: 1.2;  /* slightly larger than Raise Hand */
-}
-
-#raiseHand {
-  flex: 1;
-}
-
-  .hidden {
-  display: none;
-}
+/* ---------- Modal ---------- */
+.hidden { display:none; }
 
 .modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
 }
 
 .modal-card {
-  background: var(--panel);
-  padding: 24px;
-  border-radius: 16px;
-  width: 300px;
-  box-shadow: var(--shadow);
+  background:var(--panel);
+  padding:20px;
+  border-radius:14px;
+  width:300px;
 }
 
 .bind {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
 }
 
 .bind input {
-  width: 80px;
-  text-align: center;
-  background: #111;
-  color: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  width:80px;
+  text-align:center;
 }
-
-
 </style>
 </head>
 
 <body>
 
-<div class="center" id="home">
+<!-- HOME -->
+<div id="home">
   <div class="card">
     <h1>Team<span style="color:#b00b55">PDF</span></h1>
-    <button onclick="hostRoom()">Host</button><br><br>
-    <input id="joinInput" placeholder="ROOM CODE" />
+    <button onclick="hostRoom()">Host</button>
+    <input id="joinInput" placeholder="ROOM CODE">
     <button class="secondary" onclick="joinRoom()">Join</button>
   </div>
 </div>
 
+<!-- WORKSPACE -->
 <div id="workspace">
   <header>
     <div>Room <strong id="roomLabel"></strong></div>
     <div>
-      <div id="uploadControls">
-        <label style="cursor:pointer">Upload
-          <input type="file" id="pdfUpload" hidden />
-        </label>
-      </div>
-      <button onclick="downloadAnnotatedPDF()">⬇ PDF</button>
-      <button id="leaveBtn">Leave</button>
+      <label>
+        Upload
+        <input type="file" id="pdfUpload" hidden>
+      </label>
+      <button onclick="downloadPDF()">⬇ PDF</button>
+      <button onclick="leaveRoom()">Leave</button>
     </div>
   </header>
-
   <div id="viewer"></div>
 </div>
 
-<!-- HOST-ONLY TOOLBAR -->
+<!-- TOOLBAR -->
 <div id="toolbar">
   <div class="tool-row">
-    <div class="tool color" data-index="0"></div>
-    <div class="tool color" data-index="1"></div>
-    <div class="tool color" data-index="2"></div>
-    <div class="tool eraser">[ ]</div>
-    <input type="color" id="colorPicker" />
-    <div class="tool" id="settingsBtn">⚙️</div>
+    <div class="tool color" data-i="0"></div>
+    <div class="tool color" data-i="1"></div>
+    <div class="tool color" data-i="2"></div>
+    <div class="tool eraser">E</div>
+    <input type="color" id="colorPicker">
+    <div class="tool" id="settingsBtn">⚙</div>
   </div>
-  <input type="range" id="sizeSlider" min="1" max="20" value="3" />
+  <input type="range" id="sizeSlider" min="1" max="20" value="3">
 </div>
 
+<!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal hidden">
   <div class="modal-card">
     <h3>Keybinds</h3>
-
-    <div class="bind">
-      <span>Color 1</span>
-      <input data-bind="color0" readonly />
-    </div>
-    <div class="bind">
-      <span>Color 2</span>
-      <input data-bind="color1" readonly />
-    </div>
-    <div class="bind">
-      <span>Color 3</span>
-      <input data-bind="color2" readonly />
-    </div>
-    <div class="bind">
-      <span>Eraser</span>
-      <input data-bind="eraser" readonly />
-    </div>
-
+    <div class="bind"><span>Color 1</span><input readonly></div>
+    <div class="bind"><span>Color 2</span><input readonly></div>
+    <div class="bind"><span>Color 3</span><input readonly></div>
+    <div class="bind"><span>Eraser</span><input readonly></div>
     <button class="secondary" onclick="closeSettings()">Close</button>
   </div>
 </div>
 
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, get, set, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-const firebaseConfig = {
+/* ---------- Firebase ---------- */
+const app = initializeApp({
   apiKey:"AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain:"teampdf-7ec12.firebaseapp.com",
   databaseURL:"https://teampdf-7ec12-default-rtdb.firebaseio.com",
   projectId:"teampdf-7ec12",
-  storageBucket:"teampdf-7ec12.firebasestorage.app",
-  messagingSenderId:"307072046237",
-  appId:"1:307072046237:web:d1f44f115fdf199b5a7074"
-};
+  storageBucket:"teampdf-7ec12.firebasestorage.app"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-/* ---------- STATE ---------- */
+/* ---------- State ---------- */
+let roomCode = null;
+let isHost = false;
+let pdfUrl = null;
+let tool = "pen";
+let activeColor = 0;
+let brushSize = 3;
 
-let chatRef;
+const colors = ["#b00b55", "#00c2ff", "#00ff9c"];
 
-let roomCode, isHost=false, pdfUrl;
-let tool="pen";
-let activeProfile=0;
-let brushSize=3;
-const profiles=["#b00b55","#00c2ff","#00ff9c"];
-
-const chatPanel = document.getElementById("chatPanel");
-
-  
-/* ---------- TOOLBAR ---------- */
-const toolbar=document.getElementById("toolbar");
-const colorTools=document.querySelectorAll(".tool.color");
-
-const settingsBtn = document.getElementById("settingsBtn");
-const modal = document.getElementById("settingsModal");
-
-settingsBtn.onclick = () => {
-  modal.classList.remove("hidden");
+/* ---------- Room ---------- */
+window.hostRoom = () => {
+  isHost = true;
+  roomCode = Math.random().toString(36).slice(2,7).toUpperCase();
+  start();
 };
 
-window.closeSettings = () => {
-  modal.classList.add("hidden");
+window.joinRoom = () => {
+  if (!joinInput.value) return;
+  roomCode = joinInput.value.toUpperCase();
+  start();
 };
 
+async function start() {
+  home.style.display = "none";
+  workspace.style.display = "block";
+  roomLabel.textContent = roomCode;
 
+  if (isHost) toolbar.style.display = "flex";
 
-colorTools.forEach(t=>{
-  const i=+t.dataset.index;
-  t.style.background=profiles[i];
-  t.onclick=()=>{
-    tool="pen";
-    activeProfile=i;
-    updateToolbar();
-  };
-});
+  const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
+  const drawRef = ref(db, `rooms/${roomCode}/draw`);
 
-document.querySelector(".eraser").onclick=()=>{
-  tool="eraser";
-  updateToolbar();
-};
-
-colorPicker.oninput=e=>{
-  profiles[activeProfile]=e.target.value;
-  colorTools[activeProfile].style.background=e.target.value;
-};
-
-sizeSlider.oninput=e=>{
-  brushSize=+e.target.value;
-};
-
-function updateToolbar(){
-  document.querySelectorAll(".tool").forEach(t=>t.classList.remove("active"));
-  if(tool==="pen") colorTools[activeProfile].classList.add("active");
-  if(tool==="eraser") document.querySelector(".eraser").classList.add("active");
-}
-updateToolbar();
-
-/* ---------- ROOM ---------- */
-window.hostRoom=()=>{isHost=true;roomCode=Math.random().toString(36).slice(2,7).toUpperCase();start()};
-window.joinRoom=()=>{roomCode=joinInput.value.toUpperCase();if(roomCode)start()};
-
-async function start(){
-  home.style.display="none";
-  workspace.style.display="block";
-  roomLabel.textContent=roomCode;
-
-  chatMessages.innerHTML = "";
-
-  chatRef = ref(db, `rooms/${roomCode}/chat`);
-
-  if(isHost){
-  toolbar.style.display = "flex";  // only host sees toolbar
-} else {
-  uploadControls.style.display = "none"; // joined users cannot upload
-  toolbar.style.display = "none";        // hide toolbar for them
-}
-
-// Show chat only after joining or hosting
-const chatPanel = document.getElementById("chatPanel");
-chatPanel.style.display = "flex";
-
-
-
-  const pdfRef=ref(db,`rooms/${roomCode}/pdf`);
-  const drawRef=ref(db,`rooms/${roomCode}/draw`);
-
-  if(isHost){
-    pdfUpload.onchange=async e=>{
-      const f=e.target.files[0];
-      const r=sRef(storage,`pdfs/${roomCode}.pdf`);
-      await uploadBytes(r,f);
-      pdfUrl=await getDownloadURL(r);
-      await set(pdfRef,pdfUrl);
-      await renderPDF(pdfUrl); // render PDF first
-      drawExistingStrokes();   // then draw existing strokes
+  if (isHost) {
+    pdfUpload.onchange = async e => {
+      const file = e.target.files[0];
+      const r = sRef(storage, `pdfs/${roomCode}.pdf`);
+      await uploadBytes(r, file);
+      pdfUrl = await getDownloadURL(r);
+      await set(pdfRef, pdfUrl);
+      renderPDF(pdfUrl);
     };
   }
 
-  const snap=await get(pdfRef);
-  if(snap.exists()){
-    pdfUrl=snap.val();
-    await renderPDF(pdfUrl);  // wait for PDF to render
-    drawExistingStrokes();    // then draw old strokes
+  const snap = await get(pdfRef);
+  if (snap.exists()) {
+    pdfUrl = snap.val();
+    renderPDF(pdfUrl);
   }
 
-  function drawExistingStrokes(){
-    get(drawRef).then(drawSnap => {
-      if(drawSnap.exists()){
-        drawSnap.forEach(s => drawStroke(s.val()));
-      }
-    });
-  }
-
-  // Listen for new strokes in real-time
   onChildAdded(drawRef, s => drawStroke(s.val()));
-
-  // Enable input when name is entered
-chatName.addEventListener("input", () => {
-  const name = chatName.value.trim();
-  chatInput.disabled = !name;
-  chatSend.disabled = !name;
-});
-
-// Send message
-chatSend.onclick = () => {
-  const name = chatName.value.trim();
-  const msg = chatInput.value.trim();
-  if (!name || !msg) return;
-  push(chatRef, { name, msg });
-  chatInput.value = "";
-};
-
-  // Raise hand button
-raiseHand.onclick = () => {
-  const name = chatName.value.trim();
-  if (!name || !chatRef) return;
-
-  push(chatRef, {
-    name: "✋",
-    msg: `${name} has a question`
-  });
-};
-
-
-// Listen for messages
-onChildAdded(chatRef, snapshot => {
-  const data = snapshot.val();
-  const div = document.createElement("div");
-  div.className = "chatMessage";
-  div.innerHTML = `<strong>${data.name}:</strong> ${data.msg}`;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-
 }
 
+/* ---------- PDF ---------- */
+async function renderPDF(url) {
+  viewer.innerHTML = "";
+  const pdf = await pdfjsLib.getDocument(url).promise;
 
-/* ---------- DRAWING ---------- */
-function drawStroke(s){
-  const c=document.getElementById(`draw-${s.page}`);
-  if(!c) return;
-  const ctx=c.getContext("2d");
-  ctx.save();
-  ctx.lineCap="round";
-  ctx.lineWidth=s.size;
-  if(s.erase){
-    ctx.globalCompositeOperation="destination-out";
-    ctx.strokeStyle="rgba(0,0,0,1)";
-  } else {
-    ctx.globalCompositeOperation="source-over";
-    ctx.strokeStyle=s.color;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 1.4 });
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "page";
+
+    const pdfCanvas = document.createElement("canvas");
+    const drawCanvas = document.createElement("canvas");
+
+    pdfCanvas.width = drawCanvas.width = viewport.width;
+    pdfCanvas.height = drawCanvas.height = viewport.height;
+    drawCanvas.id = `draw-${i}`;
+
+    wrapper.append(pdfCanvas, drawCanvas);
+    viewer.appendChild(wrapper);
+
+    await page.render({
+      canvasContext: pdfCanvas.getContext("2d"),
+      viewport
+    }).promise;
+
+    if (isHost) enableDrawing(drawCanvas, i);
   }
+}
+
+/* ---------- Drawing ---------- */
+function enableDrawing(canvas, page) {
+  let drawing = false, lx, ly;
+  const r = ref(db, `rooms/${roomCode}/draw`);
+
+  canvas.onmousedown = e => {
+    drawing = true;
+    const b = canvas.getBoundingClientRect();
+    lx = e.clientX - b.left;
+    ly = e.clientY - b.top;
+  };
+
+  canvas.onmouseup = canvas.onmouseleave = () => drawing = false;
+
+  canvas.onmousemove = e => {
+    if (!drawing) return;
+    const b = canvas.getBoundingClientRect();
+    const x = e.clientX - b.left;
+    const y = e.clientY - b.top;
+
+    push(r, {
+      page,
+      x1: lx, y1: ly,
+      x2: x, y2: y,
+      color: colors[activeColor],
+      erase: tool === "eraser",
+      size: brushSize
+    });
+
+    lx = x; ly = y;
+  };
+}
+
+function drawStroke(s) {
+  const c = document.getElementById(`draw-${s.page}`);
+  if (!c) return;
+  const ctx = c.getContext("2d");
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineWidth = s.size;
+  ctx.globalCompositeOperation = s.erase ? "destination-out" : "source-over";
+  ctx.strokeStyle = s.color;
+
   ctx.beginPath();
-  ctx.moveTo(s.x1,s.y1);
-  ctx.lineTo(s.x2,s.y2);
+  ctx.moveTo(s.x1, s.y1);
+  ctx.lineTo(s.x2, s.y2);
   ctx.stroke();
   ctx.restore();
 }
 
-async function renderPDF(url){
-  viewer.innerHTML="";
-  const pdf=await pdfjsLib.getDocument(url).promise;
-  for(let i=1;i<=pdf.numPages;i++){
-    const p=await pdf.getPage(i);
-    const v=p.getViewport({scale:1.4});
-    const w=document.createElement("div");
-    w.className="page";
-    const pc=document.createElement("canvas");
-    const dc=document.createElement("canvas");
-    pc.className="pdf-layer";
-    dc.className="draw-layer";
-    pc.width=dc.width=v.width;
-    pc.height=dc.height=v.height;
-    dc.id=`draw-${i}`;
-    w.append(pc,dc);
-    viewer.appendChild(w);
-    await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
-    if(isHost) enableDrawing(dc, i);
-  }
-}
-
-function enableDrawing(c,page){
-  let d=false,lx,ly;
-  const r=ref(db,`rooms/${roomCode}/draw`);
-  c.onmousedown=e=>{
-    d=true;
-    const b=c.getBoundingClientRect();
-    lx=e.clientX-b.left; ly=e.clientY-b.top;
-  };
-  c.onmouseup=c.onmouseleave=()=>d=false;
-  c.onmousemove=e=>{
-    if(!d) return;
-    const b=c.getBoundingClientRect();
-    const x=e.clientX-b.left,y=e.clientY-b.top;
-    push(r,{
-      page,
-      x1:lx,y1:ly,x2:x,y2:y,
-      color:profiles[activeProfile],
-      erase:tool==="eraser",
-      size:brushSize
-    });
-    lx=x; ly=y;
-  };
-}
-
-  /* ---------- KEYBINDS ---------- */
-const defaultBinds = {
-  color0: "1",
-  color1: "2",
-  color2: "3",
-  eraser: "e"
-};
-
-let keybinds = JSON.parse(localStorage.getItem("keybinds")) || defaultBinds;
-
-const inputs = modal.querySelectorAll("input");
-
-inputs.forEach(input => {
-  const key = input.dataset.bind;
-  input.value = keybinds[key];
-
-  input.onfocus = () => input.value = "Press key";
-  input.onkeydown = e => {
-    e.preventDefault();
-    keybinds[key] = e.key;
-    input.value = e.key;
-    localStorage.setItem("keybinds", JSON.stringify(keybinds));
-    input.blur();
-  };
-});
-
-document.addEventListener("keydown", e => {
-  if (e.target.tagName === "INPUT") return;
-
-  if (e.key === keybinds.color0) {
-    tool = "pen"; activeProfile = 0; updateToolbar();
-  }
-  if (e.key === keybinds.color1) {
-    tool = "pen"; activeProfile = 1; updateToolbar();
-  }
-  if (e.key === keybinds.color2) {
-    tool = "pen"; activeProfile = 2; updateToolbar();
-  }
-  if (e.key === keybinds.eraser) {
-    tool = "eraser"; updateToolbar();
-  }
-});
-
-/* ---------- EXPORT ---------- */
-window.downloadAnnotatedPDF = async () => {
-  if (!pdfUrl) return;
-
+/* ---------- Export ---------- */
+window.downloadPDF = async () => {
   const bytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
   const doc = await PDFLib.PDFDocument.load(bytes);
 
-  const pages = doc.getPages();
-
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
-    const canvas = document.getElementById(`draw-${i + 1}`);
+  for (let i = 0; i < doc.getPageCount(); i++) {
+    const page = doc.getPages()[i];
+    const canvas = document.getElementById(`draw-${i+1}`);
     if (!canvas) continue;
 
-    const pngDataUrl = canvas.toDataURL("image/png");
-    const pngImage = await doc.embedPng(pngDataUrl);
-
+    const png = await doc.embedPng(canvas.toDataURL());
     const { width, height } = page.getSize();
 
-    page.drawImage(pngImage, {
-      x: 0,
-      y: 0,
-      width,
-      height
-    });
+    page.drawImage(png, { x:0, y:0, width, height });
   }
 
-  const out = await doc.save();
-
-  const blob = new Blob([out], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-
+  const blob = new Blob([await doc.save()], { type:"application/pdf" });
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = `TeamPDF-${roomCode}.pdf`;
   a.click();
-
-  URL.revokeObjectURL(url);
 };
 
-function leaveRoom() {
-  if (chatRef) {
-    off(chatRef);
-    chatRef = null;
-  }
+/* ---------- Settings ---------- */
+const modal = document.getElementById("settingsModal");
+document.getElementById("settingsBtn").onclick = () => modal.classList.remove("hidden");
+window.closeSettings = () => modal.classList.add("hidden");
 
-  roomCode = null;
-  isHost = false;
-  pdfUrl = null;
-
-  viewer.innerHTML = "";
-  chatMessages.innerHTML = "";
-
-  chatPanel.style.display = "none";
-
-  workspace.style.display = "none";
-  home.style.display = "flex";
-
-  uploadControls.style.display = "flex";
-  toolbar.style.display = "none";
-}
-
-
-  document.getElementById("leaveBtn").onclick = leaveRoom;
-
-
-  
+/* ---------- Leave ---------- */
+window.leaveRoom = () => location.reload();
 </script>
 
-<!-- Chat Panel -->
-<div id="chatPanel">
-  <div id="chatHeader">Chat</div>
-  <div id="chatMessages"></div>
-
-  <input type="text" id="chatName" placeholder="Enter your name" />
-
-<input type="text" id="chatInput" placeholder="Type a message..." disabled />
-
-<div id="chatInputContainer">
-  <button id="chatSend" title="Send">➤</button>
-  <button id="raiseHand" title="Raise Hand">✋ Raise Hand</button>
-</div>
-
-
-</div>
-
-
-  
 </body>
 </html>
