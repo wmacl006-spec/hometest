@@ -414,6 +414,9 @@ let activeProfile=0;
 let brushSize=3;
 const profiles=["#b00b55","#00c2ff","#00ff9c"];
 
+const chatPanel = document.getElementById("chatPanel");
+
+  
 /* ---------- TOOLBAR ---------- */
 const toolbar=document.getElementById("toolbar");
 const colorTools=document.querySelectorAll(".tool.color");
@@ -704,6 +707,8 @@ function leaveRoom() {
 
   viewer.innerHTML = "";
   chatMessages.innerHTML = "";
+
+  chatPanel.style.display = "none";
 
   workspace.style.display = "none";
   home.style.display = "flex";
