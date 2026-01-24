@@ -9,26 +9,34 @@
 <style>
   body {
     margin: 0;
-    background: #111;
+    background: #0f0f0f;
     color: #eee;
     font-family: system-ui, sans-serif;
-    text-align: center;
   }
 
   header {
-    padding: 12px;
-    background: #1a1a1a;
+    height: 56px;
+    background: #181818;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
     border-bottom: 1px solid #222;
   }
 
-  input {
-    color: #fff;
+  header span {
+    color: #b00b55;
+    font-weight: 600;
   }
 
-  #wrap {
+  main {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  #stage {
     position: relative;
-    display: inline-block;
-    margin-top: 10px;
   }
 
   canvas {
@@ -37,134 +45,125 @@
     left: 0;
   }
 
-  .accent {
-    color: #b00b55;
+  input[type=file] {
+    color: #ccc;
   }
 </style>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, doc, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
-    authDomain: "teampdf-7ec12.firebaseapp.com",
-    projectId: "teampdf-7ec12",
-    storageBucket: "teampdf-7ec12.firebasestorage.app",
-    messagingSenderId: "307072046237",
-    appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
+  authDomain: "teampdf-7ec12.firebaseapp.com",
+  projectId: "teampdf-7ec12",
+  storageBucket: "teampdf-7ec12.firebasestorage.app",
+  messagingSenderId: "307072046237",
+  appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-  signInAnonymously(getAuth(app));
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+signInAnonymously(getAuth(app));
 
-  const roomCode = new URLSearchParams(location.search).get("room");
+const room = new URLSearchParams(location.search).get("room");
 
-  const pdfCanvas = document.getElementById("pdfCanvas");
-  const drawCanvas = document.getElementById("drawCanvas");
-  const pdfCtx = pdfCanvas.getContext("2d");
-  const ctx = drawCanvas.getContext("2d");
+const pdfCanvas = document.getElementById("pdf");
+const drawCanvas = document.getElementById("draw");
+const pdfCtx = pdfCanvas.getContext("2d");
+const ctx = drawCanvas.getContext("2d");
 
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "#b00b55";
-  ctx.lineWidth = 3;
+ctx.lineCap = "round";
+ctx.lineJoin = "round";
+ctx.strokeStyle = "#b00b55";
+ctx.lineWidth = 3;
 
-  let drawing = false;
-  let points = [];
-  let sendQueue = [];
+await setDoc(doc(db, "rooms", room), { created: Date.now() });
 
-  await setDoc(doc(db, "rooms", roomCode), { createdAt: Date.now() });
+/* ---------- PDF ---------- */
+pdfInput.onchange = async e => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  pdfInput.onchange = async e => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const r = ref(storage, `pdfs/${room}.pdf`);
+  await uploadBytes(r, file);
+  const url = await getDownloadURL(r);
+  await updateDoc(doc(db, "rooms", room), { pdfUrl: url });
+  renderPDF(url);
+};
 
-    const refPdf = ref(storage, `pdfs/${roomCode}.pdf`);
-    await uploadBytes(refPdf, file);
-    const url = await getDownloadURL(refPdf);
+async function renderPDF(url) {
+  const pdf = await pdfjsLib.getDocument(url).promise;
+  const page = await pdf.getPage(1);
+  const vp = page.getViewport({ scale: 1.5 });
 
-    await updateDoc(doc(db, "rooms", roomCode), { pdfUrl: url });
-    renderPDF(url);
-  };
+  pdfCanvas.width = drawCanvas.width = vp.width;
+  pdfCanvas.height = drawCanvas.height = vp.height;
 
-  async function renderPDF(url) {
-    const pdf = await pdfjsLib.getDocument(url).promise;
-    const page = await pdf.getPage(1);
-    const vp = page.getViewport({ scale: 1.5 });
+  await page.render({ canvasContext: pdfCtx, viewport: vp }).promise;
+}
 
-    pdfCanvas.width = drawCanvas.width = vp.width;
-    pdfCanvas.height = drawCanvas.height = vp.height;
+/* ---------- DRAWING (REAL FIX) ---------- */
+let drawing = false;
+let points = [];
+let needsRender = false;
 
-    await page.render({ canvasContext: pdfCtx, viewport: vp }).promise;
-  }
+drawCanvas.addEventListener("pointerdown", e => {
+  drawing = true;
+  points = [[e.offsetX, e.offsetY]];
+  drawCanvas.setPointerCapture(e.pointerId);
+});
 
-  drawCanvas.onmousedown = e => {
-    drawing = true;
-    points = [{ x: e.offsetX, y: e.offsetY }];
-  };
+drawCanvas.addEventListener("pointermove", e => {
+  if (!drawing) return;
+  points.push([e.offsetX, e.offsetY]);
+  needsRender = true;
+});
 
-  drawCanvas.onmouseup = () => {
-    drawing = false;
-    flushQueue();
-  };
+drawCanvas.addEventListener("pointerup", async () => {
+  drawing = false;
+  await addDoc(collection(db, "rooms", room, "strokes"), {
+    points,
+    color: "#b00b55",
+    width: 3,
+    ts: Date.now()
+  });
+});
 
-  drawCanvas.onmousemove = e => {
-    if (!drawing) return;
-    points.push({ x: e.offsetX, y: e.offsetY });
-    drawSmooth();
-  };
-
-  function drawSmooth() {
-    if (points.length < 2) return;
-
-    const p1 = points[points.length - 2];
-    const p2 = points[points.length - 1];
-    const mid = { x: (p1.x + p2.x)/2, y: (p1.y + p2.y)/2 };
-
+function render() {
+  if (needsRender) {
+    ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
     ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.quadraticCurveTo(p1.x, p1.y, mid.x, mid.y);
+    points.forEach(([x,y], i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
     ctx.stroke();
-
-    sendQueue.push({ p1, p2 });
+    needsRender = false;
   }
-
-  async function flushQueue() {
-    for (const s of sendQueue) {
-      await addDoc(collection(db, "rooms", roomCode, "strokes"), {
-        x0: s.p1.x,
-        y0: s.p1.y,
-        x1: s.p2.x,
-        y1: s.p2.y,
-        color: "#b00b55",
-        width: 3,
-        timestamp: Date.now()
-      });
-    }
-    sendQueue = [];
-  }
+  requestAnimationFrame(render);
+}
+render();
 </script>
 </head>
 
 <body>
-  <header>
-    <span class="accent">Host</span> — Room <b id="room"></b>
-    <input type="file" id="pdfInput" accept="application/pdf">
-  </header>
+<header>
+  <span>Host</span>
+  <div>Room: <b id="r"></b></div>
+  <input type="file" id="pdfInput" accept="application/pdf">
+</header>
 
-  <div id="wrap">
-    <canvas id="pdfCanvas"></canvas>
-    <canvas id="drawCanvas"></canvas>
+<main>
+  <div id="stage">
+    <canvas id="pdf"></canvas>
+    <canvas id="draw"></canvas>
   </div>
+</main>
 
-  <script>
-    document.getElementById("room").textContent =
-      new URLSearchParams(location.search).get("room");
-  </script>
+<script>
+  r.textContent = new URLSearchParams(location.search).get("room");
+</script>
 </body>
 </html>
