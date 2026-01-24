@@ -41,15 +41,18 @@ const penBtn = document.getElementById("penTool");
 const eraserBtn = document.getElementById("eraserTool");
 const colorPicker = document.getElementById("colorPicker");
 
+// ---------- GLOBAL DRAW STATE (THIS IS THE FIX) ----------
+const drawState = {
+  tool: "pen",
+  color: "#b00b55"
+};
+
 // ---------- State ----------
 let roomId = null;
 let isTeacher = false;
 let pdfDoc = null;
 let unsubRoom = null;
 let unsubAnnotations = null;
-
-let currentTool = "pen";
-let currentColor = "#b00b55";
 
 // ---------- UI ----------
 function enterRoomUI() {
@@ -71,20 +74,22 @@ function exitRoomUI() {
   toolbar.style.display = "none";
 }
 
-// ---------- Tools ----------
+// ---------- TOOLS (NOW ACTUALLY WORK) ----------
 penBtn.onclick = () => {
-  currentTool = "pen";
+  drawState.tool = "pen";
   penBtn.classList.add("active");
   eraserBtn.classList.remove("active");
 };
 
 eraserBtn.onclick = () => {
-  currentTool = "eraser";
+  drawState.tool = "eraser";
   eraserBtn.classList.add("active");
   penBtn.classList.remove("active");
 };
 
-colorPicker.oninput = e => currentColor = e.target.value;
+colorPicker.oninput = e => {
+  drawState.color = e.target.value;
+};
 
 // ---------- Upload ----------
 uploadBtn.onclick = () => pdfUpload.click();
@@ -112,7 +117,7 @@ document.getElementById("joinRoom").onclick = async () => {
   const snap = await getDoc(doc(db, "rooms", roomId));
   if (snap.exists() && snap.data().pdfUrl) {
     await loadPDF(snap.data().pdfUrl);
-    await loadAllAnnotations(); // ⭐ LOAD HISTORY
+    await redrawAllAnnotations();
   }
 
   listenRoom();
@@ -132,18 +137,18 @@ leaveBtn.onclick = () => {
 };
 
 // ---------- Upload PDF ----------
-pdfUpload.onchange = async (e) => {
+pdfUpload.onchange = async e => {
   if (!isTeacher) return;
 
   const file = e.target.files[0];
-  const pdfRef = ref(storage, `pdfs/${roomId}.pdf`);
-  await uploadBytes(pdfRef, file);
+  const refPdf = ref(storage, `pdfs/${roomId}.pdf`);
+  await uploadBytes(refPdf, file);
 
-  const url = await getDownloadURL(pdfRef);
+  const url = await getDownloadURL(refPdf);
   await updateDoc(doc(db, "rooms", roomId), { pdfUrl: url });
 
   await loadPDF(url);
-  await loadAllAnnotations(); // ⭐ redraw everything
+  await redrawAllAnnotations();
   listenRoom();
   listenAnnotations();
 };
@@ -161,9 +166,7 @@ function listenAnnotations() {
   if (unsubAnnotations) unsubAnnotations();
   unsubAnnotations = onSnapshot(
     collection(db, "rooms", roomId, "annotations"),
-    async () => {
-      await redrawAllAnnotations();
-    }
+    redrawAllAnnotations
   );
 }
 
@@ -197,7 +200,7 @@ async function loadPDF(url) {
   }
 }
 
-// ---------- Drawing ----------
+// ---------- DRAWING (READS drawState LIVE) ----------
 function setupDrawing(canvas, page) {
   if (!isTeacher) return;
 
@@ -230,10 +233,10 @@ function setupDrawing(canvas, page) {
     points.push(p);
 
     ctx.globalCompositeOperation =
-      currentTool === "eraser" ? "destination-out" : "source-over";
+      drawState.tool === "eraser" ? "destination-out" : "source-over";
 
-    ctx.strokeStyle = currentColor;
-    ctx.lineWidth = currentTool === "eraser" ? 24 : 2;
+    ctx.strokeStyle = drawState.color;
+    ctx.lineWidth = drawState.tool === "eraser" ? 24 : 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -245,23 +248,23 @@ function setupDrawing(canvas, page) {
     drawing = false;
     ctx.globalCompositeOperation = "source-over";
 
+    if (points.length < 2) return;
+
     await addDoc(collection(db, "rooms", roomId, "annotations"), {
       page,
       points,
-      color: currentColor,
-      tool: currentTool,
+      tool: drawState.tool,
+      color: drawState.color,
       createdAt: Date.now()
     });
   };
 }
 
-// ---------- Annotation replay ----------
-async function loadAllAnnotations() {
-  await redrawAllAnnotations();
-}
-
+// ---------- REDRAW ALL (PAST + LIVE) ----------
 async function redrawAllAnnotations() {
-  // clear all overlays
+  if (!roomId) return;
+
+  // clear overlays
   [...viewer.children].forEach(p => {
     const c = p.querySelector(".overlay");
     c.getContext("2d").clearRect(0, 0, c.width, c.height);
@@ -276,7 +279,7 @@ async function redrawAllAnnotations() {
   snap.forEach(d => drawAnnotation(d.data()));
 }
 
-// ---------- Draw ----------
+// ---------- DRAW ----------
 function drawAnnotation(a) {
   const pageDiv = viewer.children[a.page - 1];
   if (!pageDiv) return;
