@@ -439,12 +439,6 @@ const chatPanel = document.getElementById("chatPanel");
 const toolbar=document.getElementById("toolbar");
 const colorTools=document.querySelectorAll(".tool.color");
 
-const settingsBtn = document.getElementById("settingsBtn");
-const modal = document.getElementById("settingsModal");
-
-settingsBtn.onclick = () => modal.classList.remove("hidden");
-window.closeSettings = () => modal.classList.add("hidden");
-
 colorTools.forEach(t=>{
   const i=+t.dataset.index;
   t.style.background=profiles[i];
