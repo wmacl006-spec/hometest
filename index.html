@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Live PDF Classroom</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 :root{
@@ -40,8 +40,8 @@ button.primary{
   background:var(--accent);
   border-color:var(--accent);
 }
-.spacer{flex:1}
 .hidden{display:none!important}
+.spacer{flex:1}
 
 #viewer{
   position:absolute;
@@ -74,7 +74,7 @@ canvas{display:block;border-radius:10px;border:1px solid var(--border)}
 
   <div id="lobby">
     <button id="createRoom" class="primary">Create</button>
-    <input id="roomInput" placeholder="Room code" />
+    <input id="roomInput" placeholder="Room code">
     <button id="joinRoom">Join</button>
   </div>
 
@@ -83,7 +83,7 @@ canvas{display:block;border-radius:10px;border:1px solid var(--border)}
   <button id="uploadBtn" class="primary hidden">Upload PDF</button>
 </header>
 
-<input id="pdfUpload" type="file" accept="application/pdf" hidden />
+<input id="pdfUpload" type="file" accept="application/pdf" hidden>
 <div id="viewer"></div>
 
 <div class="toolbar" id="toolbar">
