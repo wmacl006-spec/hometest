@@ -2,23 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live Classroom PDF</title>
-
+  <title>Live PDF Classroom</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
     :root {
+      --accent: #b00b55;
       --bg: #0e0e11;
       --panel: #16161b;
-      --muted: #8b8b9a;
       --border: #2a2a33;
-      --accent: #4f8cff;
+      --muted: #9a9aa6;
       --danger: #ff5f5f;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -28,48 +25,30 @@
       overflow: hidden;
     }
 
-    /* ---------- Top Bar ---------- */
     header {
       height: 64px;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
+      gap: 10px;
       padding: 0 16px;
-      gap: 12px;
     }
 
-    header h1 {
+    h1 {
       font-size: 16px;
-      font-weight: 600;
       margin: 0;
+      font-weight: 600;
     }
 
-    .spacer {
-      flex: 1;
-    }
-
-    .pill {
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: #1f1f26;
-      border: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .pill.teacher {
-      color: #fff;
-      background: rgba(79,140,255,0.15);
-      border-color: rgba(79,140,255,0.4);
-    }
+    .spacer { flex: 1; }
 
     button, input {
       background: #1f1f26;
       color: #fff;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
+      border-radius: 10px;
+      padding: 8px 14px;
       font-size: 14px;
     }
 
@@ -78,17 +57,30 @@
       border-color: var(--accent);
     }
 
-    button.danger {
+    button.ghost {
       background: transparent;
+      color: var(--muted);
+    }
+
+    button.danger {
       border-color: var(--danger);
       color: var(--danger);
+      background: transparent;
     }
 
     input {
-      width: 120px;
+      width: 130px;
     }
 
-    /* ---------- Viewer ---------- */
+    .pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(176,11,85,0.15);
+      border: 1px solid rgba(176,11,85,0.4);
+      color: #fff;
+      font-size: 13px;
+    }
+
     #viewer {
       position: absolute;
       top: 64px;
@@ -107,7 +99,7 @@
     canvas {
       display: block;
       margin: 0 auto;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--border);
     }
 
@@ -119,28 +111,23 @@
       position: absolute;
       top: 0;
       left: 0;
-      background: transparent;
       pointer-events: none;
     }
 
-    /* ---------- Floating Tools ---------- */
     .toolbar {
       position: fixed;
       right: 20px;
       bottom: 20px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 10px;
-      display: flex;
+      display: none;
       gap: 10px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
-    .toolbar button {
-      padding: 10px 12px;
-      border-radius: 10px;
-    }
+    .hidden { display: none !important; }
   </style>
 
   <!-- jsPDF -->
@@ -151,23 +138,27 @@
 <header>
   <h1>📚 Live PDF Classroom</h1>
 
-  <button id="createRoom" class="primary">Create room</button>
-  <input id="roomInput" placeholder="Room code" />
-  <button id="joinRoom">Join</button>
+  <!-- LOBBY UI -->
+  <div id="lobbyUI">
+    <button id="createRoom" class="primary">Create room</button>
+    <input id="roomInput" placeholder="Room code" />
+    <button id="joinRoom">Join</button>
+  </div>
 
-  <span id="roomLabel" class="pill"></span>
+  <!-- IN-ROOM UI -->
+  <span id="roomLabel" class="pill hidden"></span>
 
   <div class="spacer"></div>
 
-  <input type="file" id="pdfUpload" accept="application/pdf" hidden />
-  <button id="uploadBtn">Upload PDF</button>
+  <button id="uploadBtn" class="ghost hidden">Upload PDF</button>
+  <button id="leaveRoom" class="danger hidden">Leave</button>
 
-  <button id="leaveRoom" class="danger">Leave</button>
+  <input type="file" id="pdfUpload" accept="application/pdf" hidden />
 </header>
 
 <div id="viewer"></div>
 
-<div class="toolbar">
+<div class="toolbar" id="toolbar">
   <button id="downloadPdf">⬇ Download</button>
 </div>
 
