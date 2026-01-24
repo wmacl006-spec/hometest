@@ -40,12 +40,16 @@ const toolbar = document.getElementById("toolbar");
 const penBtn = document.getElementById("penTool");
 const eraserBtn = document.getElementById("eraserTool");
 const colorPicker = document.getElementById("colorPicker");
+const eraserCursor = document.getElementById("eraserCursor");
 
 // ---------- GLOBAL DRAW STATE ----------
 const drawState = {
   tool: "pen",
-  color: "#b00b55"
+  color: "#b00b55",
+  size: 2
 };
+
+const clientId = crypto.randomUUID(); // ⭐ IMPORTANT
 
 // ---------- State ----------
 let roomId = null;
@@ -80,12 +84,14 @@ penBtn.onclick = () => {
   drawState.tool = "pen";
   penBtn.classList.add("active");
   eraserBtn.classList.remove("active");
+  eraserCursor.style.display = "none";
 };
 
 eraserBtn.onclick = () => {
   drawState.tool = "eraser";
   eraserBtn.classList.add("active");
   penBtn.classList.remove("active");
+  eraserCursor.style.display = "block";
 };
 
 colorPicker.oninput = e => drawState.color = e.target.value;
@@ -116,7 +122,7 @@ document.getElementById("joinRoom").onclick = async () => {
   const snap = await getDoc(doc(db, "rooms", roomId));
   if (snap.exists() && snap.data().pdfUrl) {
     await loadPDF(snap.data().pdfUrl);
-    await loadAnnotationHistory(); // ✅ ONCE
+    await loadAnnotationHistory();
   }
 
   listenRoom();
@@ -171,7 +177,10 @@ function listenAnnotations() {
       if (!annotationsLoaded) return;
 
       snap.docChanges().forEach(change => {
-        if (change.type === "added") {
+        if (
+          change.type === "added" &&
+          change.doc.data().clientId !== clientId
+        ) {
           drawAnnotation(change.doc.data());
         }
       });
@@ -227,17 +236,13 @@ function setupDrawing(canvas, page) {
     };
   };
 
-  canvas.onmousedown = e => {
-    drawing = true;
-    points = [];
-    const p = pos(e);
-    points.push(p);
-    ctx.beginPath();
-    ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
-  };
-
   canvas.onmousemove = e => {
+    if (drawState.tool === "eraser") {
+      eraserCursor.style.left = `${e.clientX}px`;
+      eraserCursor.style.top = `${e.clientY}px`;
+    }
     if (!drawing) return;
+
     const p = pos(e);
     points.push(p);
 
@@ -253,6 +258,15 @@ function setupDrawing(canvas, page) {
     ctx.stroke();
   };
 
+  canvas.onmousedown = e => {
+    drawing = true;
+    points = [];
+    const p = pos(e);
+    points.push(p);
+    ctx.beginPath();
+    ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
+  };
+
   canvas.onmouseup = async () => {
     drawing = false;
     ctx.globalCompositeOperation = "source-over";
@@ -264,12 +278,13 @@ function setupDrawing(canvas, page) {
       points,
       tool: drawState.tool,
       color: drawState.color,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      clientId
     });
   };
 }
 
-// ---------- Load annotation history (ONCE) ----------
+// ---------- Load history ----------
 async function loadAnnotationHistory() {
   annotationsLoaded = false;
 
@@ -310,30 +325,3 @@ function drawAnnotation(a) {
   ctx.stroke();
   ctx.globalCompositeOperation = "source-over";
 }
-
-// ---------- Download ----------
-document.getElementById("downloadPdf").onclick = () => {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-
-  [...viewer.children].forEach((p, i) => {
-    const [b, o] = p.querySelectorAll("canvas");
-    const t = document.createElement("canvas");
-    t.width = b.width;
-    t.height = b.height;
-    const c = t.getContext("2d");
-    c.drawImage(b, 0, 0);
-    c.drawImage(o, 0, 0);
-    if (i) pdf.addPage();
-    pdf.addImage(
-      t.toDataURL("image/jpeg", 1),
-      "JPEG",
-      0,
-      0,
-      pdf.internal.pageSize.getWidth(),
-      pdf.internal.pageSize.getHeight()
-    );
-  });
-
-  pdf.save("annotated.pdf");
-};
