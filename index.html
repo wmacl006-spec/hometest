@@ -299,6 +299,7 @@ input#joinInput:focus {
   display: flex;
   gap: 6px;
   padding: 6px 8px;
+  align-items: center;
 }
 
 #chatInputContainer input {
@@ -318,14 +319,21 @@ input#joinInput:focus {
   background: var(--accent);
   border: none;
   color: white;
-  padding: 6px 10px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: all var(--transition);
 }
 
 #chatInputContainer button:hover {
   background: var(--accent-hover);
+  transform: scale(1.05);
+}
+  #raiseHand {
+  font-size: 1rem;
 }
 
   #chatName {
@@ -335,6 +343,10 @@ input#joinInput:focus {
   background: #111;
   color: white;
   outline: none;
+}
+  #chatSend {
+  font-size: 1rem;
+  opacity: 0.9;
 }
 
 
@@ -757,9 +769,11 @@ function leaveRoom() {
   <input type="text" id="chatName" placeholder="Enter your name" />
 
   <div id="chatInputContainer">
-    <input type="text" id="chatInput" placeholder="Type a message..." disabled />
-    <button id="chatSend" disabled>Send</button>
-  </div>
+  <button id="raiseHand" title="Raise hand">✋</button>
+  <input type="text" id="chatInput" placeholder="Type a message..." disabled />
+  <button id="chatSend" disabled>➤</button>
+</div>
+
 </div>
 
 
