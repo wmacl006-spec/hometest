@@ -295,35 +295,32 @@ input#joinInput:focus {
   color: var(--accent);
 }
 
-#chatInputContainer {
+  #chatInputContainer {
   display: flex;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 4px;               /* smaller gap */
+  padding: 4px 6px;       /* tighter padding */
 }
 
-
 #chatInputContainer input {
-  flex: 1;           /* take up remaining space */
+  flex: 1;                /* fills available space */
   padding: 6px 8px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #111;
   color: white;
-}
-
-#chatInputContainer input:disabled {
-  opacity: 0.5;
+  min-width: 0;           /* prevents overflow in flex */
 }
 
 #chatInputContainer button {
-  flex: 0 0 36px;    /* fixed width buttons */
-  height: 36px;      /* same height as input for alignment */
+  flex: 0 0 auto;         /* button width adapts to content */
+  padding: 0 8px;         /* make thinner horizontally */
+  height: 36px;           /* same height as input for alignment */
   border-radius: 8px;
   border: none;
   cursor: pointer;
   background: var(--accent);
   color: white;
-  font-size: 1rem;   /* emoji friendly */
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -332,6 +329,11 @@ input#joinInput:focus {
 
 #chatInputContainer button:hover {
   background: var(--accent-hover);
+}
+
+
+#chatInputContainer input:disabled {
+  opacity: 0.5;
 }
   
   #raiseHand {
