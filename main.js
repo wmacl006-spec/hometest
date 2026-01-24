@@ -1,7 +1,8 @@
-// --- PDF.js ---
+// ✅ PDF.js now exists
 const pdfjsLib = window.pdfjsLib;
+
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/legacy/build/pdf.worker.min.js";
 
 // --- Firebase ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -50,14 +51,14 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   });
 });
 
-// --- Live PDF updates ---
+// --- Live updates ---
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
   const { pdfUrl } = snap.data();
   await loadPDF(pdfUrl);
 });
 
-// --- Render PDF pages ---
+// --- Render all pages ---
 async function loadPDF(url) {
   viewer.innerHTML = "";
 
