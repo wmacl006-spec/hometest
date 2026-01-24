@@ -1,130 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeamPDF</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TeamPDF</title>
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
-  <!-- PDF-lib -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+:root {
+  --bg:#0e0e11;
+  --panel:#16161c;
+  --accent:#b00b55;
+  --border:#262633;
+  --text:#f2f2f2;
+}
 
-  <style>
-    :root {
-      --bg: #0e0e11;
-      --panel: #16161c;
-      --accent: #b00b55;
-      --text: #f2f2f2;
-      --muted: #9a9aa3;
-      --border: #262633;
-    }
+* { box-sizing:border-box; font-family:Inter,sans-serif; }
 
-    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  overflow:hidden;
+}
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      overflow: hidden;
-    }
+/* ---------- Layout ---------- */
+#workspace { display:none; height:100vh; }
 
-    button {
-      background: linear-gradient(135deg, var(--accent), #d4146a);
-      border: none;
-      color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+header {
+  height:64px;
+  background:var(--panel);
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid var(--border);
+}
 
-    button.secondary {
-      background: transparent;
-      border: 1px solid var(--border);
-    }
+#viewer {
+  height:calc(100vh - 64px);
+  overflow-y:auto;
+  padding:24px 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:32px;
+}
 
-    input[type=file] { display: none; }
+/* ---------- PDF Layers ---------- */
+.page {
+  position:relative;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+}
 
-    .center {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
+.pdf-layer { position:relative; z-index:1; }
+.draw-layer {
+  position:absolute;
+  inset:0;
+  z-index:2;
+}
 
-    .card {
-      background: var(--panel);
-      padding: 40px;
-      border-radius: 20px;
-      width: 360px;
-      text-align: center;
-    }
+/* ---------- Toolbar ---------- */
+#toolbar {
+  position:fixed;
+  top:90px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:10px 14px;
+  border-radius:14px;
+  display:flex;
+  gap:10px;
+  z-index:999;
+}
 
-    #workspace { display: none; height: 100vh; }
+.tool {
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
-    header {
-      height: 64px;
-      background: var(--panel);
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-    }
+.tool.active { outline:2px solid white; }
 
-    #viewer {
-      height: calc(100vh - 64px);
-      overflow-y: auto;
-      padding: 24px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 32px;
-    }
+.tool.eraser {
+  border-radius:8px;
+  background:#111;
+  color:white;
+  font-weight:700;
+}
 
-    /* ---- PDF PAGE LAYERING FIX ---- */
-    .page {
-      position: relative;
-      box-shadow: 0 20px 40px rgba(0,0,0,.4);
-    }
+input[type=color] {
+  width:34px;
+  height:34px;
+  padding:0;
+  border:none;
+  background:none;
+  cursor:pointer;
+}
 
-    .page canvas {
-      display: block;
-    }
+/* ---------- Home ---------- */
+.center {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+}
 
-    .pdf-layer {
-      position: relative;
-      z-index: 1;
-    }
+.card {
+  background:var(--panel);
+  padding:40px;
+  border-radius:20px;
+  width:360px;
+  text-align:center;
+}
 
-    .draw-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      pointer-events: auto;
-    }
+button {
+  background:linear-gradient(135deg,#b00b55,#d4146a);
+  border:none;
+  color:white;
+  padding:12px 16px;
+  border-radius:12px;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    .room-code {
-      color: var(--accent);
-      font-weight: 700;
-      letter-spacing: 2px;
-    }
-  </style>
+button.secondary {
+  background:transparent;
+  border:1px solid var(--border);
+}
+</style>
 </head>
+
 <body>
 
 <div class="center" id="home">
   <div class="card">
     <h1>Team<span style="color:#b00b55">PDF</span></h1>
-    <p class="muted">Live collaborative PDF annotation</p>
-    <button onclick="hostRoom()">Host Session</button><br><br>
+    <button onclick="hostRoom()">Host</button><br><br>
     <input id="joinInput" placeholder="ROOM CODE" />
     <button class="secondary" onclick="joinRoom()">Join</button>
   </div>
@@ -132,181 +156,194 @@
 
 <div id="workspace">
   <header>
-    <div>
-      Room <span class="room-code" id="roomLabel"></span>
-    </div>
+    <div>Room <strong id="roomLabel"></strong></div>
     <div>
       <div id="uploadControls">
-        <label for="pdfUpload" style="cursor:pointer">Upload PDF</label>
-        <input type="file" id="pdfUpload" accept="application/pdf" />
+        <label style="cursor:pointer">Upload
+          <input type="file" id="pdfUpload" hidden />
+        </label>
       </div>
       <button onclick="downloadAnnotatedPDF()">⬇ PDF</button>
-      <button class="secondary" onclick="location.reload()">Leave</button>
     </div>
   </header>
 
   <div id="viewer"></div>
 </div>
 
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <div class="tool color" data-index="0"></div>
+  <div class="tool color" data-index="1"></div>
+  <div class="tool color" data-index="2"></div>
+  <div class="tool eraser">[ ]</div>
+  <input type="color" id="colorPicker" />
+</div>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-  import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
-    authDomain: "teampdf-7ec12.firebaseapp.com",
-    databaseURL: "https://teampdf-7ec12-default-rtdb.firebaseio.com",
-    projectId: "teampdf-7ec12",
-    storageBucket: "teampdf-7ec12.firebasestorage.app",
-    messagingSenderId: "307072046237",
-    appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
+const firebaseConfig = {
+  apiKey:"AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
+  authDomain:"teampdf-7ec12.firebaseapp.com",
+  databaseURL:"https://teampdf-7ec12-default-rtdb.firebaseio.com",
+  projectId:"teampdf-7ec12",
+  storageBucket:"teampdf-7ec12.firebasestorage.app",
+  messagingSenderId:"307072046237",
+  appId:"1:307072046237:web:d1f44f115fdf199b5a7074"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const storage = getStorage(app);
+
+/* ---------- STATE ---------- */
+let roomCode, isHost=false, pdfUrl;
+let tool = "pen";
+let activeProfile = 0;
+const profiles = ["#b00b55","#00c2ff","#00ff9c"];
+
+/* ---------- TOOLBAR ---------- */
+const tools = document.querySelectorAll(".tool.color");
+tools.forEach(t=>{
+  const i = +t.dataset.index;
+  t.style.background = profiles[i];
+  t.onclick = () => {
+    tool="pen";
+    activeProfile=i;
+    updateToolbar();
   };
+});
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const storage = getStorage(app);
+document.querySelector(".eraser").onclick=()=>{
+  tool="eraser";
+  updateToolbar();
+};
 
-  let roomCode = null;
-  let isHost = false;
-  let pdfUrl = null;
+colorPicker.oninput = e => {
+  profiles[activeProfile] = e.target.value;
+  tools[activeProfile].style.background = e.target.value;
+};
 
-  window.hostRoom = () => {
-    isHost = true;
-    roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    startSession();
-  };
+function updateToolbar(){
+  document.querySelectorAll(".tool").forEach(t=>t.classList.remove("active"));
+  if(tool==="pen") tools[activeProfile].classList.add("active");
+  if(tool==="eraser") document.querySelector(".eraser").classList.add("active");
+}
+updateToolbar();
 
-  window.joinRoom = () => {
-    roomCode = document.getElementById('joinInput').value.toUpperCase();
-    if (!roomCode) return;
-    startSession();
-  };
+/* ---------- ROOM ---------- */
+window.hostRoom=()=>{isHost=true;roomCode=Math.random().toString(36).slice(2,7).toUpperCase();start()};
+window.joinRoom=()=>{roomCode=joinInput.value.toUpperCase();if(roomCode)start()};
 
-  async function startSession() {
-    home.style.display = 'none';
-    workspace.style.display = 'block';
-    roomLabel.textContent = roomCode;
+async function start(){
+  home.style.display="none";
+  workspace.style.display="block";
+  roomLabel.textContent=roomCode;
+  if(!isHost) uploadControls.style.display="none";
 
-    if (!isHost) uploadControls.style.display = 'none';
+  const pdfRef = ref(db,`rooms/${roomCode}/pdf`);
+  const drawRef = ref(db,`rooms/${roomCode}/draw`);
 
-    const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
-    const drawRef = ref(db, `rooms/${roomCode}/draw`);
-
-    if (isHost) {
-      pdfUpload.onchange = async e => {
-        const file = e.target.files[0];
-        const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
-        await uploadBytes(fileRef, file);
-        pdfUrl = await getDownloadURL(fileRef);
-        await set(pdfRef, pdfUrl);
-        renderPDF(pdfUrl);
-      };
-    }
-
-    const snap = await get(pdfRef);
-    if (snap.exists()) {
-      pdfUrl = snap.val();
+  if(isHost){
+    pdfUpload.onchange=async e=>{
+      const f=e.target.files[0];
+      const r=sRef(storage,`pdfs/${roomCode}.pdf`);
+      await uploadBytes(r,f);
+      pdfUrl=await getDownloadURL(r);
+      await set(pdfRef,pdfUrl);
       renderPDF(pdfUrl);
-    }
-
-    onChildAdded(drawRef, s => drawStroke(s.val()));
-  }
-
-  function drawStroke({ page, x1, y1, x2, y2 }) {
-    const canvas = document.getElementById(`draw-${page}`);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#b00b55';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  }
-
-  async function renderPDF(url) {
-    viewer.innerHTML = '';
-    const pdf = await pdfjsLib.getDocument(url).promise;
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.4 });
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'page';
-
-      const pdfCanvas = document.createElement('canvas');
-      const drawCanvas = document.createElement('canvas');
-
-      pdfCanvas.className = 'pdf-layer';
-      drawCanvas.className = 'draw-layer';
-
-      pdfCanvas.width = drawCanvas.width = viewport.width;
-      pdfCanvas.height = drawCanvas.height = viewport.height;
-
-      drawCanvas.id = `draw-${i}`;
-
-      wrapper.append(pdfCanvas, drawCanvas);
-      viewer.appendChild(wrapper);
-
-      await page.render({
-        canvasContext: pdfCanvas.getContext('2d'),
-        viewport
-      }).promise;
-
-      if (isHost) enableDrawing(drawCanvas, i);
-    }
-  }
-
-  function enableDrawing(canvas, page) {
-    let drawing = false, lx, ly;
-    const drawRef = ref(db, `rooms/${roomCode}/draw`);
-
-    canvas.onmousedown = e => {
-      drawing = true;
-      const r = canvas.getBoundingClientRect();
-      lx = e.clientX - r.left;
-      ly = e.clientY - r.top;
-    };
-
-    canvas.onmouseup = canvas.onmouseleave = () => drawing = false;
-
-    canvas.onmousemove = e => {
-      if (!drawing) return;
-      const r = canvas.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      push(drawRef, { page, x1: lx, y1: ly, x2: x, y2: y });
-      lx = x; ly = y;
     };
   }
 
-  window.downloadAnnotatedPDF = async () => {
-    if (!pdfUrl) return;
-    const bytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+  const snap=await get(pdfRef);
+  if(snap.exists()){pdfUrl=snap.val();renderPDF(pdfUrl);}
 
-    const pages = pdfDoc.getPages();
-    for (let i = 0; i < pages.length; i++) {
-      const c = document.getElementById(`draw-${i + 1}`);
-      if (!c) continue;
-      const img = await pdfDoc.embedPng(c.toDataURL());
-      const { width, height } = pages[i].getSize();
-      pages[i].drawImage(img, { x: 0, y: 0, width, height });
-    }
+  onChildAdded(drawRef,s=>drawStroke(s.val()));
+}
 
-    const out = await pdfDoc.save();
-    const blob = new Blob([out], { type: 'application/pdf' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `TeamPDF-${roomCode}.pdf`;
-    a.click();
+/* ---------- DRAWING ---------- */
+function drawStroke(s){
+  const c=document.getElementById(`draw-${s.page}`);
+  if(!c) return;
+  const ctx=c.getContext("2d");
+  ctx.save();
+  ctx.lineCap="round";
+  ctx.lineWidth=3;
+  if(s.erase){
+    ctx.globalCompositeOperation="destination-out";
+    ctx.strokeStyle="rgba(0,0,0,1)";
+  } else {
+    ctx.globalCompositeOperation="source-over";
+    ctx.strokeStyle=s.color;
+  }
+  ctx.beginPath();
+  ctx.moveTo(s.x1,s.y1);
+  ctx.lineTo(s.x2,s.y2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+async function renderPDF(url){
+  viewer.innerHTML="";
+  const pdf=await pdfjsLib.getDocument(url).promise;
+  for(let i=1;i<=pdf.numPages;i++){
+    const p=await pdf.getPage(i);
+    const v=p.getViewport({scale:1.4});
+    const w=document.createElement("div");
+    w.className="page";
+    const pc=document.createElement("canvas");
+    const dc=document.createElement("canvas");
+    pc.className="pdf-layer";
+    dc.className="draw-layer";
+    pc.width=dc.width=v.width;
+    pc.height=dc.height=v.height;
+    dc.id=`draw-${i}`;
+    w.append(pc,dc);
+    viewer.appendChild(w);
+    await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
+    enableDrawing(dc,i);
+  }
+}
+
+function enableDrawing(c,page){
+  let d=false,lx,ly;
+  const r=ref(db,`rooms/${roomCode}/draw`);
+  c.onmousedown=e=>{
+    d=true;
+    const b=c.getBoundingClientRect();
+    lx=e.clientX-b.left; ly=e.clientY-b.top;
   };
+  c.onmouseup=c.onmouseleave=()=>d=false;
+  c.onmousemove=e=>{
+    if(!d) return;
+    const b=c.getBoundingClientRect();
+    const x=e.clientX-b.left,y=e.clientY-b.top;
+    push(r,{page,x1:lx,y1:ly,x2:x,y2:y,color:profiles[activeProfile],erase:tool==="eraser"});
+    lx=x; ly=y;
+  };
+}
+
+/* ---------- EXPORT ---------- */
+window.downloadAnnotatedPDF=async()=>{
+  if(!pdfUrl) return;
+  const bytes=await fetch(pdfUrl).then(r=>r.arrayBuffer());
+  const doc=await PDFLib.PDFDocument.load(bytes);
+  doc.getPages().forEach((p,i)=>{
+    const c=document.getElementById(`draw-${i+1}`);
+    if(!c) return;
+    p.drawImage(doc.embedPng(c.toDataURL()),{x:0,y:0,width:p.getWidth(),height:p.getHeight()});
+  });
+  const out=await doc.save();
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out],{type:"application/pdf"}));
+  a.download=`TeamPDF-${roomCode}.pdf`;
+  a.click();
+};
 </script>
 </body>
 </html>
