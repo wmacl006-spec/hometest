@@ -10,14 +10,17 @@
       background: #111;
       color: #eee;
       font-family: Arial, sans-serif;
+      overflow: hidden;
     }
 
-    header {
-      padding: 10px;
-      background: #181818;
+    /* ---------- LOBBY ---------- */
+    #lobby {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
       display: flex;
-      gap: 8px;
-      align-items: center;
+      gap: 6px;
     }
 
     button {
@@ -33,10 +36,20 @@
       outline: 2px solid white;
     }
 
+    input {
+      padding: 6px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    /* ---------- VIEWER ---------- */
     #viewer {
-      height: calc(100vh - 52px);
+      position: absolute;
+      inset: 0;
       overflow-y: auto;
-      padding: 20px;
+      display: flex;
+      justify-content: center;
+      padding: 40px 0;
     }
 
     .page {
@@ -45,22 +58,30 @@
     }
 
     canvas {
-      display: block;
       position: absolute;
       top: 0;
       left: 0;
+      display: block;
     }
 
     canvas:first-child {
       position: relative;
     }
 
+    /* ---------- TOOLBAR ---------- */
     #toolbar {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 30;
       display: none;
       gap: 6px;
-      align-items: center;
+      background: #181818;
+      padding: 8px;
+      border-radius: 10px;
     }
 
+    /* ---------- ERASER CURSOR ---------- */
     #eraserCursor {
       position: fixed;
       width: 48px;
@@ -71,7 +92,7 @@
       transform: translate(-50%, -50%);
       display: none;
       z-index: 9999;
-      background: rgba(176, 11, 85, 0.15);
+      background: rgba(176, 11, 85, 0.12);
     }
 
     .hidden { display: none; }
@@ -79,29 +100,24 @@
 </head>
 <body>
 
-<header>
-  <div id="lobbyUI">
-    <button id="createRoom">Create</button>
-    <input id="roomInput" placeholder="Room ID" />
-    <button id="joinRoom">Join</button>
-  </div>
-
-  <span id="roomLabel" class="hidden"></span>
-
+<!-- Lobby -->
+<div id="lobby">
+  <button id="createRoom">Create</button>
+  <input id="roomInput" placeholder="Room ID" />
+  <button id="joinRoom">Join</button>
   <button id="uploadBtn" class="hidden">Upload PDF</button>
-  <input type="file" id="pdfUpload" accept="application/pdf" hidden />
-
-  <div id="toolbar">
-    <button id="penTool" class="active">Pen</button>
-    <button id="eraserTool">Eraser</button>
-    <input type="color" id="colorPicker" value="#b00b55" />
-  </div>
-
   <button id="leaveRoom" class="hidden">Leave</button>
-</header>
+  <input type="file" id="pdfUpload" accept="application/pdf" hidden />
+</div>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <button id="penTool" class="active">Pen</button>
+  <button id="eraserTool">Eraser</button>
+  <input type="color" id="colorPicker" value="#b00b55" />
+</div>
 
 <div id="viewer"></div>
-
 <div id="eraserCursor"></div>
 
 <script type="module" src="./main.js"></script>
