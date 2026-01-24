@@ -314,25 +314,42 @@ async function start(){
   const pdfRef=ref(db,`rooms/${roomCode}/pdf`);
   const drawRef=ref(db,`rooms/${roomCode}/draw`);
 
-  if(isHost){
-    pdfUpload.onchange=async e=>{
-      const f=e.target.files[0];
-      const r=sRef(storage,`pdfs/${roomCode}.pdf`);
-      await uploadBytes(r,f);
-      pdfUrl=await getDownloadURL(r);
-      await set(pdfRef,pdfUrl);
-      renderPDF(pdfUrl);
-    };
-  }
+  if (isHost){
+  pdfUpload.onchange = async e=>{
+    const f = e.target.files[0];
+    const r = sRef(storage,`pdfs/${roomCode}.pdf`);
+    await uploadBytes(r,f);
+    pdfUrl = await getDownloadURL(r);
+    await set(pdfRef,pdfUrl);
 
-  const snap=await get(pdfRef);
-  if(snap.exists()){pdfUrl=snap.val();renderPDF(pdfUrl);}
+    await renderPDF(pdfUrl); // 👈 IMPORTANT
+  };
+}
 
-  onChildAdded(drawRef,s=>drawStroke(s.val()));
+
+  const snap = await get(pdfRef);
+if (snap.exists()) {
+  pdfUrl = snap.val();
+
+  // 1️⃣ render pages first
+  await renderPDF(pdfUrl);
+
+  const drawRef = ref(db, `rooms/${roomCode}/draw`);
+
+  // 2️⃣ replay all previous strokes
+  await replayAllStrokes(drawRef);
+
+  // 3️⃣ listen for new strokes only
+  onChildAdded(drawRef, s => drawStroke(s.val()));
+}
+
 }
 
 /* ---------- DRAWING ---------- */
 function drawStroke(s){
+  
+  if (!s || !s.page) return;
+
   const c=document.getElementById(`draw-${s.page}`);
   if(!c) return;
   const ctx=c.getContext("2d");
@@ -402,6 +419,17 @@ function enableDrawing(c,page){
   };
 }
 
+  /* ---------- REPLAY EXISTING STROKES ---------- */
+async function replayAllStrokes(drawRef) {
+  const snap = await get(drawRef);
+  if (!snap.exists()) return;
+
+  snap.forEach(child => {
+    drawStroke(child.val());
+  });
+}
+
+
   /* ---------- KEYBINDS ---------- */
 const defaultBinds = {
   color0: "1",
@@ -448,6 +476,8 @@ document.addEventListener("keydown", e => {
     tool = "eraser"; updateToolbar();
   }
 });
+
+  
 
 
 /* ---------- EXPORT ---------- */
