@@ -297,11 +297,8 @@ input#joinInput:focus {
 
 #chatInputContainer {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   padding: 6px 8px;
-  border-top: 1px solid var(--border);
-  background: #16161c;
-  flex-shrink: 0;         /* prevents shrinking when panel resizes */
 }
 
 #chatInputContainer input {
@@ -329,6 +326,15 @@ input#joinInput:focus {
 
 #chatInputContainer button:hover {
   background: var(--accent-hover);
+}
+
+  #chatName {
+  padding: 6px 8px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: #111;
+  color: white;
+  outline: none;
 }
 
 
@@ -737,12 +743,15 @@ function leaveRoom() {
 <div id="chatPanel">
   <div id="chatHeader">💬 Chat</div>
   <div id="chatMessages"></div>
+
+  <input type="text" id="chatName" placeholder="Enter your name" />
+
   <div id="chatInputContainer">
-    <input type="text" id="chatName" placeholder="Enter your name" />
     <input type="text" id="chatInput" placeholder="Type a message..." disabled />
     <button id="chatSend" disabled>Send</button>
   </div>
 </div>
+
 
   
 </body>
