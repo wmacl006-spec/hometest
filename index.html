@@ -1,85 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <title>TeamPDF</title>
 
 <style>
-  body {
-    margin: 0;
-    height: 100vh;
-    background: #0f0f0f;
-    color: #eee;
-    font-family: system-ui, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+body {
+  margin: 0;
+  height: 100vh;
+  background: #0f0f0f;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eee;
+}
 
-  .panel {
-    background: #181818;
-    padding: 32px;
-    border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-    text-align: center;
-    width: 260px;
-  }
+.card {
+  background: #181818;
+  padding: 32px;
+  border-radius: 14px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
 
-  h1 {
-    margin: 0 0 20px;
-    color: #b00b55;
-  }
+h1 {
+  margin: 0 0 24px;
+  color: #b00b55;
+}
 
-  input {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #222;
-    color: #fff;
-    margin-bottom: 16px;
-    font-size: 16px;
-    outline: none;
-  }
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #222;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
 
-  button {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #b00b55;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 8px;
-  }
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-  button.secondary {
-    background: #333;
-  }
+.host {
+  background: #b00b55;
+  color: #fff;
+  margin-bottom: 10px;
+}
 
-  button:hover { opacity: .9; }
+.join {
+  background: #333;
+  color: #eee;
+}
+
+button:hover { opacity: .9; }
 </style>
 </head>
-<body>
 
-<div class="panel">
+<body>
+<div class="card">
   <h1>TeamPDF</h1>
   <input id="room" placeholder="Room code" />
-  <button onclick="host()">Host</button>
-  <button class="secondary" onclick="join()">Join</button>
+  <button class="host" onclick="go(true)">Host</button>
+  <button class="join" onclick="go(false)">Join</button>
 </div>
 
 <script>
-  function host() {
-    if (!room.value) return;
-    location.href = `host.html?room=${room.value}`;
-  }
-  function join() {
-    if (!room.value) return;
-    location.href = `join.html?room=${room.value}`;
-  }
+function go(isHost) {
+  if (!room.value) return;
+  location.href = `${isHost ? "host" : "join"}.html?room=${room.value}`;
+}
 </script>
-
 </body>
 </html>
