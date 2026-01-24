@@ -16,8 +16,11 @@
   --bg:#0e0e11;
   --panel:#16161c;
   --accent:#b00b55;
+  --accent-hover:#d4146a;
   --border:#262633;
   --text:#f2f2f2;
+  --shadow:0 10px 30px rgba(0,0,0,0.5);
+  --transition:0.3s ease;
 }
 
 * { box-sizing:border-box; font-family:Inter,sans-serif; }
@@ -36,11 +39,13 @@ body {
 header {
   height:64px;
   background:var(--panel);
-  padding:12px 16px;
+  padding:12px 24px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   border-bottom:1px solid var(--border);
+  box-shadow: var(--shadow);
+  font-weight:500;
 }
 
 #viewer {
@@ -57,9 +62,11 @@ header {
 .page {
   position:relative;
   box-shadow:0 20px 40px rgba(0,0,0,.4);
+  border-radius:12px;
+  overflow:hidden;
 }
 
-.pdf-layer { position:relative; z-index:1; }
+.pdf-layer { position:relative; z-index:1; border-radius:12px; }
 .draw-layer {
   position:absolute;
   inset:0;
@@ -73,91 +80,63 @@ header {
   right:24px;
   background:var(--panel);
   border:1px solid var(--border);
-  padding:14px;
-  border-radius:16px;
+  padding:16px;
+  border-radius:24px;
   display:flex;
   flex-direction:column;
   gap:12px;
   z-index:999;
+  box-shadow: var(--shadow);
 }
 
 .tool-row {
   display:flex;
-  gap:10px;
+  gap:12px;
 }
 
 .tool {
-  width:34px;
-  height:34px;
+  width:40px;
+  height:40px;
   border-radius:50%;
   border:2px solid var(--border);
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
+  font-weight:600;
+  transition: all var(--transition);
 }
 
-.tool.active { outline:2px solid white; }
+.tool:hover {
+  transform:scale(1.1);
+  border-color:var(--accent);
+}
+
+.tool.active {
+  outline:3px solid var(--accent);
+}
 
 .tool.eraser {
-  border-radius:8px;
+  border-radius:12px;
   background:#111;
   color:white;
-  font-weight:700;
 }
-
-  .modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-
-.modal.hidden { display:none; }
-
-.modal-card {
-  background:var(--panel);
-  padding:24px;
-  border-radius:16px;
-  width:300px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.bind {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.bind input {
-  width:90px;
-  background:#111;
-  border:1px solid var(--border);
-  color:white;
-  padding:6px 8px;
-  border-radius:8px;
-  text-align:center;
-  cursor:pointer;
-}
-
 
 input[type=color] {
-  width:34px;
-  height:34px;
-  padding:0;
+  width:40px;
+  height:40px;
   border:none;
-  background:none;
   cursor:pointer;
+  border-radius:50%;
+  padding:0;
+  transition: all var(--transition);
 }
 
+input[type=color]:hover { transform:scale(1.1); }
+
 input[type=range] {
-  width:140px;
+  width:160px;
+  accent-color:var(--accent);
 }
 
 /* ---------- Home ---------- */
@@ -166,30 +145,112 @@ input[type=range] {
   align-items:center;
   justify-content:center;
   height:100%;
+  background:linear-gradient(135deg,#111,#1a1a27);
 }
 
 .card {
   background:var(--panel);
-  padding:40px;
-  border-radius:20px;
-  width:360px;
+  padding:50px 40px;
+  border-radius:24px;
+  width:380px;
   text-align:center;
+  box-shadow:var(--shadow);
+  transition: transform var(--transition);
+}
+
+.card:hover { transform:translateY(-6px); }
+
+.card h1 {
+  font-size:2.5rem;
+  margin-bottom:24px;
 }
 
 button {
   background:linear-gradient(135deg,#b00b55,#d4146a);
   border:none;
   color:white;
-  padding:12px 16px;
-  border-radius:12px;
+  padding:14px 20px;
+  border-radius:16px;
   font-weight:600;
   cursor:pointer;
+  transition: all var(--transition);
+  font-size:1rem;
+  width:100%;
+}
+
+button:hover {
+  background:linear-gradient(135deg,#d4146a,#ff3a7a);
+  transform:translateY(-2px) scale(1.02);
+  box-shadow:0 8px 20px rgba(255,0,90,0.4);
 }
 
 button.secondary {
   background:transparent;
-  border:1px solid var(--border);
+  border:2px solid var(--accent);
+  color:var(--accent);
+  font-weight:600;
+  margin-top:12px;
+  transition: all var(--transition);
 }
+
+button.secondary:hover {
+  background:var(--accent);
+  color:white;
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(255,0,90,0.3);
+}
+
+input#joinInput {
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  margin-bottom:12px;
+  background:#111;
+  color:white;
+  font-weight:500;
+  text-align:center;
+  transition: all var(--transition);
+}
+
+input#joinInput:focus {
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 10px rgba(255,0,90,0.5);
+}
+
+/* ---------- Upload/Download Buttons ---------- */
+#uploadControls label {
+  background: linear-gradient(135deg,#00c2ff,#0077ff);
+  color:white;
+  padding:8px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:600;
+  transition: all var(--transition);
+}
+
+#uploadControls label:hover {
+  transform:scale(1.05);
+  box-shadow:0 6px 20px rgba(0, 200, 255,0.5);
+}
+
+#workspace header button {
+  background: linear-gradient(135deg,#00ff9c,#00c27d);
+  color:#111;
+  padding:8px 14px;
+  border-radius:12px;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+  transition: all var(--transition);
+}
+
+#workspace header button:hover {
+  transform:scale(1.05);
+  box-shadow:0 6px 20px rgba(0, 255, 150,0.4);
+}
+
 </style>
 </head>
 
