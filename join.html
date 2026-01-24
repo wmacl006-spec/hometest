@@ -1,20 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Viewer</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Viewer</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    color: #eee;
+    font-family: system-ui, sans-serif;
+    text-align: center;
+  }
+
+  header {
+    padding: 12px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+  }
+
+  #wrap {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+</style>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, getDoc, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
+    authDomain: "teampdf-7ec12.firebaseapp.com",
+    projectId: "teampdf-7ec12",
+    storageBucket: "teampdf-7ec12.firebasestorage.app",
+    messagingSenderId: "307072046237",
+    appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  signInAnonymously(getAuth(app));
+
+  const roomCode = new URLSearchParams(location.search).get("room");
+
+  const pdfCanvas = document.getElementById("pdfCanvas");
+  const drawCanvas = document.getElementById("drawCanvas");
+  const pdfCtx = pdfCanvas.getContext("2d");
+  const ctx = drawCanvas.getContext("2d");
+
+  drawCanvas.style.pointerEvents = "none";
+
+  const room = await getDoc(doc(db, "rooms", roomCode));
+  if (!room.exists()) return alert("Room not found");
+
+  if (room.data().pdfUrl) renderPDF(room.data().pdfUrl);
+
+  async function renderPDF(url) {
+    const pdf = await pdfjsLib.getDocument(url).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({ scale: 1.5 });
+
+    pdfCanvas.width = drawCanvas.width = vp.width;
+    pdfCanvas.height = drawCanvas.height = vp.height;
+
+    await page.render({ canvasContext: pdfCtx, viewport: vp }).promise;
+  }
+
+  const q = query(
+    collection(db, "rooms", roomCode, "strokes"),
+    orderBy("timestamp")
+  );
+
+  onSnapshot(q, snap => {
+    snap.docChanges().forEach(c => {
+      if (c.type === "added") draw(c.doc.data());
+    });
+  });
+
+  function draw(s) {
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.width;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(s.x0, s.y0);
+    ctx.lineTo(s.x1, s.y1);
+    ctx.stroke();
+  }
+</script>
 </head>
-<body>
-  <h2>Viewer</h2>
 
-  <div id="canvasContainer">
+<body>
+  <header>
+    Viewer — Room <b id="room"></b>
+  </header>
+
+  <div id="wrap">
     <canvas id="pdfCanvas"></canvas>
     <canvas id="drawCanvas"></canvas>
   </div>
 
-  <script type="module" src="join.js"></script>
+  <script>
+    document.getElementById("room").textContent =
+      new URLSearchParams(location.search).get("room");
+  </script>
 </body>
 </html>
