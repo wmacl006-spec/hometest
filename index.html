@@ -9,22 +9,22 @@
   <h1>TeamPDF</h1>
 
   <input id="roomCode" placeholder="Room Code" />
-  <br /><br />
+  <br><br>
 
   <button onclick="host()">Host</button>
   <button onclick="join()">Join</button>
 
   <script>
     function host() {
-      const code = document.getElementById("roomCode").value.trim();
-      if (!code) return alert("Enter a room code");
-      window.location = `host.html?room=${code}`;
+      const code = roomCode.value.trim();
+      if (!code) return alert("Enter room code");
+      location.href = `host.html?room=${code}`;
     }
 
     function join() {
-      const code = document.getElementById("roomCode").value.trim();
-      if (!code) return alert("Enter a room code");
-      window.location = `join.html?room=${code}`;
+      const code = roomCode.value.trim();
+      if (!code) return alert("Enter room code");
+      location.href = `join.html?room=${code}`;
     }
   </script>
 </body>
