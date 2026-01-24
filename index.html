@@ -298,7 +298,12 @@ function updateToolbar(){
 updateToolbar();
 
 /* ---------- ROOM ---------- */
-window.hostRoom=()=>{isHost=true;roomCode=Math.random().toString(36).slice(2,7).toUpperCase();start()};
+window.hostRoom = () => { 
+  isHost = true;                     // ✅ set host first
+  roomCode = Math.random().toString(36).slice(2,7).toUpperCase(); 
+  start();
+};
+
 window.joinRoom=()=>{roomCode=joinInput.value.toUpperCase();if(roomCode)start()};
 
 async function start(){
@@ -322,9 +327,10 @@ async function start(){
     pdfUrl = await getDownloadURL(r);
     await set(pdfRef,pdfUrl);
 
-    await renderPDF(pdfUrl); // 👈 IMPORTANT
+    await renderPDF(pdfUrl); // ✅ await ensures canvases exist before drawing
   };
 }
+
 
 
   const snap = await get(pdfRef);
@@ -389,6 +395,7 @@ async function renderPDF(url){
     viewer.appendChild(w);
     await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
     if (isHost) enableDrawing(dc, i);
+
   }
 }
 
