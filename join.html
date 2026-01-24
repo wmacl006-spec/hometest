@@ -1,62 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Viewer</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 <style>
-body {
-  margin: 0;
-  background: #0f0f0f;
-  font-family: system-ui, sans-serif;
-  color: #eee;
-}
-
+body { margin:0; background:#0f0f0f; color:#eee; font-family:system-ui; }
 header {
-  height: 56px;
-  background: #181818;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  border-bottom: 1px solid #222;
+  height:56px; background:#181818;
+  display:flex; align-items:center;
+  padding:0 16px; border-bottom:1px solid #222;
 }
-
-main {
-  display: flex;
-  justify-content: center;
-  padding: 24px 0;
-}
-
-#pages {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.page {
-  position: relative;
-  margin: 0 auto;
-}
-
-.draw {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-}
+#pages { display:flex; flex-direction:column; gap:24px; padding:24px; }
+.page { position:relative; margin:auto; }
+.draw { position:absolute; top:0; left:0; pointer-events:none; }
 </style>
 </head>
-
 <body>
-<header>
-  Viewer — Room <b id="roomLabel"></b>
-</header>
 
-<main>
-  <div id="pages"></div>
-</main>
+<header>Viewer — Room <b id="roomLabel"></b></header>
+<div id="pages"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -81,67 +44,63 @@ roomLabel.textContent = room;
 
 const pagesEl = document.getElementById("pages");
 const pageCtx = {};
-const strokeBuffer = [];
+let allStrokes = [];
 
 const roomDoc = await getDoc(doc(db, "rooms", room));
-if (!roomDoc.exists()) alert("Room not found");
-
 if (roomDoc.data().pdfUrl) renderPDF(roomDoc.data().pdfUrl);
 
 async function renderPDF(url) {
   const pdf = await pdfjsLib.getDocument(url).promise;
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
     const vp = page.getViewport({ scale: 1.5 });
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "page";
+    const wrap = document.createElement("div");
+    wrap.className = "page";
 
-    const pdfCanvas = document.createElement("canvas");
-    const drawCanvas = document.createElement("canvas");
-    drawCanvas.className = "draw";
+    const pdfC = document.createElement("canvas");
+    const drawC = document.createElement("canvas");
+    drawC.className = "draw";
 
-    pdfCanvas.width = drawCanvas.width = vp.width;
-    pdfCanvas.height = drawCanvas.height = vp.height;
+    pdfC.width = drawC.width = vp.width;
+    pdfC.height = drawC.height = vp.height;
 
-    wrapper.appendChild(pdfCanvas);
-    wrapper.appendChild(drawCanvas);
-    pagesEl.appendChild(wrapper);
+    wrap.append(pdfC, drawC);
+    pagesEl.appendChild(wrap);
 
-    pageCtx[i] = drawCanvas.getContext("2d");
+    pageCtx[p] = drawC.getContext("2d");
 
     await page.render({
-      canvasContext: pdfCanvas.getContext("2d"),
+      canvasContext: pdfC.getContext("2d"),
       viewport: vp
     }).promise;
   }
 
-  strokeBuffer.forEach(drawStroke);
+  redrawAll();
 }
 
 onSnapshot(collection(db, "rooms", room, "strokes"), snap => {
-  snap.docChanges().forEach(c => {
-    if (c.type === "added") {
-      if (pageCtx[c.doc.data().page]) {
-        drawStroke(c.doc.data());
-      } else {
-        strokeBuffer.push(c.doc.data());
-      }
-    }
-  });
+  allStrokes = snap.docs.map(d => d.data());
+  redrawAll();
 });
 
-function drawStroke(s) {
-  const ctx = pageCtx[s.page];
-  if (!ctx) return;
+function redrawAll() {
+  Object.values(pageCtx).forEach(ctx =>
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
+  );
 
-  ctx.strokeStyle = s.color;
-  ctx.lineWidth = s.width;
-  ctx.lineCap = ctx.lineJoin = "round";
-  ctx.beginPath();
-  s.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
-  ctx.stroke();
+  allStrokes.forEach(s => {
+    const ctx = pageCtx[s.page];
+    if (!ctx) return;
+
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.width;
+    ctx.lineCap = ctx.lineJoin = "round";
+    ctx.beginPath();
+    s.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    ctx.stroke();
+  });
 }
 </script>
 </body>
