@@ -14,8 +14,10 @@
       text-align: center;
     }
 
-    input {
-      margin-bottom: 20px;
+    button {
+      margin: 5px;
+      padding: 8px 14px;
+      font-size: 16px;
     }
 
     canvas {
@@ -31,12 +33,16 @@
 
   <input type="file" id="pdfUpload" accept="application/pdf" />
 
-  <br />
+  <br /><br />
+
+  <button id="prevPage">⬅ Prev</button>
+  <span id="pageInfo">Page 1</span>
+  <button id="nextPage">Next ➡</button>
+
+  <br /><br />
 
   <canvas id="pdfCanvas"></canvas>
 
-  <!-- ONLY load your module -->
   <script type="module" src="./main.js"></script>
-
 </body>
 </html>
