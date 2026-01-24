@@ -1,10 +1,10 @@
-// -------- PDF.js --------
+// ---------- PDF.js ----------
 import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
 
-// -------- Firebase --------
+// ---------- Firebase ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -20,7 +20,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// -------- Config --------
+// ---------- Config ----------
 const firebaseConfig = {
   apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain: "teampdf-7ec12.firebaseapp.com",
@@ -30,7 +30,7 @@ const firebaseConfig = {
   appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
 };
 
-// -------- Init --------
+// ---------- Init ----------
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
@@ -40,7 +40,7 @@ const viewer = document.getElementById("viewer");
 let pdfDoc = null;
 let isRemoteScroll = false;
 
-// -------- Upload --------
+// ---------- Upload ----------
 document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -56,12 +56,12 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   });
 });
 
-// -------- Firestore sync --------
+// ---------- Firestore sync ----------
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
   const data = snap.data();
 
-  if (!pdfDoc || data.pdfUrl !== pdfDoc._url) {
+  if (!pdfDoc) {
     await loadPDF(data.pdfUrl);
   }
 
@@ -72,7 +72,7 @@ onSnapshot(doc(db, "session", "current"), async (snap) => {
   }
 });
 
-// -------- Scroll broadcasting --------
+// ---------- Scroll broadcast ----------
 viewer.addEventListener("scroll", async () => {
   if (isRemoteScroll || !pdfDoc) return;
 
@@ -81,7 +81,7 @@ viewer.addEventListener("scroll", async () => {
   });
 });
 
-// -------- Render ALL pages --------
+// ---------- Render ALL pages ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
 
