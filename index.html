@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live PDF Viewer</title>
+  <title>Live PDF Draw</title>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
 
   <style>
     body {
@@ -27,18 +30,28 @@
       padding: 20px;
     }
 
-    canvas {
+    .page {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .page canvas {
       display: block;
-      margin: 0 auto 20px auto;
-      background: #222;
-      border: 1px solid #444;
+      margin: 0 auto;
+    }
+
+    .draw-layer {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: auto;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h3>📄 Live PDF Viewer</h3>
+    <h2>📄 Live PDF Draw</h2>
     <input type="file" id="pdfUpload" accept="application/pdf" />
   </header>
 
