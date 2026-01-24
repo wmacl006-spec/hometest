@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Viewer</title>
@@ -7,38 +7,51 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
-  body {
-    margin: 0;
-    background: #0f0f0f;
-    color: #eee;
-    font-family: system-ui, sans-serif;
-  }
+body {
+  margin: 0;
+  background: #0f0f0f;
+  font-family: system-ui, sans-serif;
+  color: #eee;
+}
 
-  header {
-    height: 56px;
-    background: #181818;
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    border-bottom: 1px solid #222;
-  }
+header {
+  height: 56px;
+  background: #181818;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #222;
+}
 
-  main {
-    display: flex;
-    justify-content: center;
-    padding: 12px;
-  }
+main {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+}
 
-  #stage {
-    position: relative;
-  }
+#stage {
+  position: relative;
+}
 
-  canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 </style>
+</head>
+
+<body>
+<header>
+  Viewer — Room <b id="roomLabel"></b>
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="pdf"></canvas>
+    <canvas id="draw"></canvas>
+  </div>
+</main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -59,6 +72,7 @@ const db = getFirestore(app);
 signInAnonymously(getAuth(app));
 
 const room = new URLSearchParams(location.search).get("room");
+roomLabel.textContent = room;
 
 const pdfCanvas = document.getElementById("pdf");
 const drawCanvas = document.getElementById("draw");
@@ -66,6 +80,8 @@ const pdfCtx = pdfCanvas.getContext("2d");
 const ctx = drawCanvas.getContext("2d");
 
 drawCanvas.style.pointerEvents = "none";
+
+let strokes = [];
 
 const roomDoc = await getDoc(doc(db, "rooms", room));
 if (!roomDoc.exists()) alert("Room not found");
@@ -85,32 +101,29 @@ async function renderPDF(url) {
 
 onSnapshot(collection(db, "rooms", room, "strokes"), snap => {
   snap.docChanges().forEach(c => {
-    if (c.type === "added") drawStroke(c.doc.data());
+    if (c.type === "added") {
+      strokes.push(c.doc.data());
+      redraw();
+    }
   });
 });
+
+function redraw() {
+  ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  strokes.forEach(drawStroke);
+}
 
 function drawStroke(s) {
   ctx.strokeStyle = s.color;
   ctx.lineWidth = s.width;
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.beginPath();
-  s.points.forEach(([x,y], i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+  s.points.forEach(([x,y], i) =>
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)
+  );
   ctx.stroke();
 }
-</script>
-</head>
-
-<body>
-<header>Viewer — Room <b id="r"></b></header>
-<main>
-  <div id="stage">
-    <canvas id="pdf"></canvas>
-    <canvas id="draw"></canvas>
-  </div>
-</main>
-
-<script>
-  r.textContent = new URLSearchParams(location.search).get("room");
 </script>
 </body>
 </html>
