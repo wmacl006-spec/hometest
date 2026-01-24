@@ -328,7 +328,16 @@ async function start(){
   const snap=await get(pdfRef);
   if(snap.exists()){pdfUrl=snap.val();renderPDF(pdfUrl);}
 
-  onChildAdded(drawRef,s=>drawStroke(s.val()));
+  const drawSnap = await get(drawRef);
+if (drawSnap.exists()) {
+  drawSnap.forEach(s => {
+    drawStroke(s.val());
+  });
+}
+
+// Continue listening for new strokes
+onChildAdded(drawRef, s => drawStroke(s.val()));
+
 }
 
 /* ---------- DRAWING ---------- */
