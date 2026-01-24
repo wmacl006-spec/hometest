@@ -1,105 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Live PDF Classroom</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-:root{
-  --accent:#b00b55;
-  --bg:#0e0e11;
-  --panel:#16161b;
-  --border:#2a2a33;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  color:#fff;
-  font-family:system-ui,sans-serif;
-  overflow:hidden;
-}
-header{
-  height:60px;
-  background:var(--panel);
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:0 12px;
-}
-button,input{
-  background:#1f1f26;
-  color:#fff;
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:6px 10px;
-}
-button.primary{
-  background:var(--accent);
-  border-color:var(--accent);
-}
-.hidden{display:none!important}
-.spacer{flex:1}
-
-#viewer{
-  position:absolute;
-  top:60px;bottom:0;left:0;right:0;
-  overflow:auto;
-  padding:20px;
-}
-.page{position:relative;margin:0 auto 30px;width:fit-content}
-canvas{display:block;border-radius:10px;border:1px solid var(--border)}
-.overlay{position:absolute;top:0;left:0}
-
-.toolbar{
-  position:fixed;
-  right:20px;bottom:20px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:10px;
-  display:none;
-  flex-direction:column;
-  gap:8px;
-}
-.profile{width:32px}
-</style>
+  <meta charset="UTF-8" />
+  <title>TeamPDF</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <h1>TeamPDF</h1>
 
-<header>
-  <strong>Live PDF Classroom</strong>
+  <input id="roomCode" placeholder="Room Code" />
+  <br /><br />
 
-  <div id="lobby">
-    <button id="createRoom" class="primary">Create</button>
-    <input id="roomInput" placeholder="Room code">
-    <button id="joinRoom">Join</button>
-  </div>
+  <button onclick="host()">Host</button>
+  <button onclick="join()">Join</button>
 
-  <span id="roomLabel" class="hidden"></span>
-  <div class="spacer"></div>
-  <button id="uploadBtn" class="primary hidden">Upload PDF</button>
-</header>
+  <script>
+    function host() {
+      const code = document.getElementById("roomCode").value.trim();
+      if (!code) return alert("Enter a room code");
+      window.location = `host.html?room=${code}`;
+    }
 
-<input id="pdfUpload" type="file" accept="application/pdf" hidden>
-<div id="viewer"></div>
-
-<div class="toolbar" id="toolbar">
-  <button id="pen">✏️</button>
-  <button id="eraser">🧽</button>
-
-  <input id="colorPicker" type="color" value="#b00b55">
-
-  <div style="display:flex;gap:6px">
-    <button class="profile" data-p="0">A</button>
-    <button class="profile" data-p="1">B</button>
-    <button class="profile" data-p="2">C</button>
-  </div>
-</div>
-
-<script type="module" src="./main.js"></script>
+    function join() {
+      const code = document.getElementById("roomCode").value.trim();
+      if (!code) return alert("Enter a room code");
+      window.location = `join.html?room=${code}`;
+    }
+  </script>
 </body>
 </html>
