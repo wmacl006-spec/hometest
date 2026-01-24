@@ -41,20 +41,19 @@ const penBtn = document.getElementById("penTool");
 const eraserBtn = document.getElementById("eraserTool");
 const colorPicker = document.getElementById("colorPicker");
 const eraserCursor = document.getElementById("eraserCursor");
-
 const downloadBtn = document.getElementById("downloadPdf");
+const colorHistoryEl = document.getElementById("colorHistory");
 
-
-// ---------- GLOBAL DRAW STATE ----------
+// ---------- Draw State ----------
 const drawState = {
   tool: "pen",
-  color: "#b00b55",
-  size: 2
+  color: "#b00b55"
 };
 
-const clientId = crypto.randomUUID(); // ⭐ IMPORTANT
+const colorHistory = [drawState.color];
+const clientId = crypto.randomUUID();
 
-// ---------- State ----------
+// ---------- Room State ----------
 let roomId = null;
 let isTeacher = false;
 let pdfDoc = null;
@@ -82,6 +81,36 @@ function exitRoomUI() {
   toolbar.style.display = "none";
 }
 
+// ---------- Color History ----------
+function renderColorHistory() {
+  colorHistoryEl.innerHTML = "";
+
+  colorHistory.forEach((color, i) => {
+    const swatch = document.createElement("div");
+    swatch.className = "color-swatch" + (i === 0 ? " active" : "");
+    swatch.style.background = color;
+    swatch.onclick = () => setActiveColor(color);
+    colorHistoryEl.appendChild(swatch);
+  });
+}
+
+function setActiveColor(color) {
+  drawState.color = color;
+  colorPicker.value = color;
+
+  const i = colorHistory.indexOf(color);
+  if (i !== -1) colorHistory.splice(i, 1);
+
+  colorHistory.unshift(color);
+  if (colorHistory.length > 5) colorHistory.length = 5;
+
+  renderColorHistory();
+}
+
+renderColorHistory();
+
+colorPicker.oninput = e => setActiveColor(e.target.value);
+
 // ---------- Tools ----------
 penBtn.onclick = () => {
   drawState.tool = "pen";
@@ -97,12 +126,10 @@ eraserBtn.onclick = () => {
   eraserCursor.style.display = "block";
 };
 
-colorPicker.oninput = e => drawState.color = e.target.value;
-
 // ---------- Upload ----------
 uploadBtn.onclick = () => pdfUpload.click();
 
-// ---------- Create ----------
+// ---------- Create Room ----------
 document.getElementById("createRoom").onclick = async () => {
   roomId = crypto.randomUUID().slice(0, 6);
   isTeacher = true;
@@ -113,7 +140,7 @@ document.getElementById("createRoom").onclick = async () => {
   enterRoomUI();
 };
 
-// ---------- Join ----------
+// ---------- Join Room ----------
 document.getElementById("joinRoom").onclick = async () => {
   roomId = document.getElementById("roomInput").value.trim();
   if (!roomId) return;
@@ -134,14 +161,11 @@ document.getElementById("joinRoom").onclick = async () => {
 
 // ---------- Leave ----------
 leaveBtn.onclick = () => {
-  if (unsubRoom) unsubRoom();
-  if (unsubAnnotations) unsubAnnotations();
-
+  unsubRoom?.();
+  unsubAnnotations?.();
+  viewer.innerHTML = "";
   roomId = null;
   pdfDoc = null;
-  annotationsLoaded = false;
-  viewer.innerHTML = "";
-
   exitRoomUI();
 };
 
@@ -164,7 +188,7 @@ pdfUpload.onchange = async e => {
 
 // ---------- Firestore ----------
 function listenRoom() {
-  if (unsubRoom) unsubRoom();
+  unsubRoom?.();
   unsubRoom = onSnapshot(doc(db, "rooms", roomId), snap => {
     const d = snap.data();
     if (d?.pdfUrl && !pdfDoc) loadPDF(d.pdfUrl);
@@ -172,19 +196,14 @@ function listenRoom() {
 }
 
 function listenAnnotations() {
-  if (unsubAnnotations) unsubAnnotations();
-
+  unsubAnnotations?.();
   unsubAnnotations = onSnapshot(
     collection(db, "rooms", roomId, "annotations"),
     snap => {
       if (!annotationsLoaded) return;
-
-      snap.docChanges().forEach(change => {
-        if (
-          change.type === "added" &&
-          change.doc.data().clientId !== clientId
-        ) {
-          drawAnnotation(change.doc.data());
+      snap.docChanges().forEach(c => {
+        if (c.type === "added" && c.doc.data().clientId !== clientId) {
+          drawAnnotation(c.doc.data());
         }
       });
     }
@@ -208,8 +227,6 @@ async function loadPDF(url) {
 
     base.width = overlay.width = vp.width;
     base.height = overlay.height = vp.height;
-    base.style.width = overlay.style.width = `${vp.width}px`;
-    base.style.height = overlay.style.height = `${vp.height}px`;
 
     overlay.className = "overlay";
 
@@ -226,8 +243,6 @@ function setupDrawing(canvas, page) {
   if (!isTeacher) return;
 
   const ctx = canvas.getContext("2d");
-  canvas.style.pointerEvents = "auto";
-
   let drawing = false;
   let points = [];
 
@@ -237,6 +252,15 @@ function setupDrawing(canvas, page) {
       x: (e.clientX - r.left) / r.width,
       y: (e.clientY - r.top) / r.height
     };
+  };
+
+  canvas.onmousedown = e => {
+    drawing = true;
+    points = [];
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
+    points.push(p);
   };
 
   canvas.onmousemove = e => {
@@ -255,25 +279,14 @@ function setupDrawing(canvas, page) {
     ctx.strokeStyle = drawState.color;
     ctx.lineWidth = drawState.tool === "eraser" ? 24 : 2;
     ctx.lineCap = "round";
-    ctx.lineJoin = "round";
 
     ctx.lineTo(p.x * canvas.width, p.y * canvas.height);
     ctx.stroke();
   };
 
-  canvas.onmousedown = e => {
-    drawing = true;
-    points = [];
-    const p = pos(e);
-    points.push(p);
-    ctx.beginPath();
-    ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
-  };
-
   canvas.onmouseup = async () => {
     drawing = false;
     ctx.globalCompositeOperation = "source-over";
-
     if (points.length < 2) return;
 
     await addDoc(collection(db, "rooms", roomId, "annotations"), {
@@ -287,22 +300,7 @@ function setupDrawing(canvas, page) {
   };
 }
 
-// ---------- Load history ----------
-async function loadAnnotationHistory() {
-  annotationsLoaded = false;
-
-  const q = query(
-    collection(db, "rooms", roomId, "annotations"),
-    orderBy("createdAt")
-  );
-
-  const snap = await getDocs(q);
-  snap.forEach(d => drawAnnotation(d.data()));
-
-  annotationsLoaded = true;
-}
-
-// ---------- Draw ----------
+// ---------- Draw Annotation ----------
 function drawAnnotation(a) {
   const pageDiv = viewer.children[a.page - 1];
   if (!pageDiv) return;
@@ -317,7 +315,6 @@ function drawAnnotation(a) {
   ctx.strokeStyle = a.color;
   ctx.lineWidth = a.tool === "eraser" ? 24 : 2;
   ctx.lineCap = "round";
-  ctx.lineJoin = "round";
 
   a.points.forEach((p, i) => {
     const x = p.x * canvas.width;
@@ -329,17 +326,17 @@ function drawAnnotation(a) {
   ctx.globalCompositeOperation = "source-over";
 }
 
-downloadBtn.onclick = async () => {
+// ---------- Download ----------
+downloadBtn.onclick = () => {
   if (!pdfDoc) return;
 
   const { jsPDF } = window.jspdf;
   const pages = viewer.querySelectorAll(".page");
+  let pdf;
 
-  let pdf = null;
-
-  for (let i = 0; i < pages.length; i++) {
-    const base = pages[i].children[0];
-    const overlay = pages[i].children[1];
+  pages.forEach((p, i) => {
+    const base = p.children[0];
+    const overlay = p.children[1];
 
     const merged = document.createElement("canvas");
     merged.width = base.width;
@@ -352,20 +349,13 @@ downloadBtn.onclick = async () => {
     const img = merged.toDataURL("image/png");
 
     if (i === 0) {
-      // CRITICAL: set page size to match canvas
-      pdf = new jsPDF({
-        unit: "px",
-        format: [merged.width, merged.height]
-      });
+      pdf = new jsPDF({ unit: "px", format: [merged.width, merged.height] });
     } else {
       pdf.addPage([merged.width, merged.height]);
     }
 
     pdf.addImage(img, "PNG", 0, 0, merged.width, merged.height);
-  }
+  });
 
   pdf.save(`room-${roomId}.pdf`);
 };
-
-
-
