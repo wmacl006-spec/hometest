@@ -5,14 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TeamPDF</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
-
-  <!-- PDF-lib for export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
   <style>
@@ -20,7 +16,6 @@
       --bg: #0e0e11;
       --panel: #16161c;
       --accent: #b00b55;
-      --accent-soft: rgba(176, 11, 85, 0.15);
       --text: #f2f2f2;
       --muted: #9a9aa3;
       --border: #262633;
@@ -36,22 +31,17 @@
       overflow: hidden;
     }
 
-    /* ---------- Buttons & Inputs ---------- */
     button {
       background: linear-gradient(135deg, var(--accent), #d4146a);
       border: none;
       color: white;
-      padding: 14px 18px;
-      border-radius: 14px;
+      padding: 12px 16px;
+      border-radius: 12px;
       font-weight: 600;
-      font-size: 15px;
       cursor: pointer;
-      transition: transform .08s ease, box-shadow .08s ease, opacity .08s ease;
-      box-shadow: 0 10px 25px rgba(176,11,85,.35);
+      transition: transform .08s ease, box-shadow .08s ease;
+      box-shadow: 0 8px 20px rgba(176,11,85,.35);
     }
-
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); opacity: .9; }
 
     button.secondary {
       background: transparent;
@@ -59,23 +49,22 @@
       border: 1px solid var(--border);
     }
 
-    .icon-btn {
-      padding: 12px 14px;
-      border-radius: 12px;
+    button.icon {
       background: var(--panel);
       border: 1px solid var(--border);
       box-shadow: none;
+      padding: 10px 12px;
     }
 
-    input[type=file] { display: none; }
+    .center { display: flex; align-items: center; justify-content: center; height: 100%; }
 
-    .file-label {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px dashed var(--border);
-      cursor: pointer;
-      font-weight: 600;
-      background: var(--accent-soft);
+    .card {
+      background: var(--panel);
+      padding: 42px;
+      border-radius: 22px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.45);
+      text-align: center;
+      width: 380px;
     }
 
     .input {
@@ -89,89 +78,83 @@
       letter-spacing: 2px;
     }
 
-    .input::placeholder { color: var(--muted); letter-spacing: normal; }
-
-    /* ---------- Layout ---------- */
-    .center { display: flex; align-items: center; justify-content: center; height: 100%; }
-
-    .card {
-      background: var(--panel);
-      padding: 42px;
-      border-radius: 22px;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.45);
-      text-align: center;
-      width: 380px;
-    }
-
-    h1 { margin: 0 0 10px 0; font-size: 34px; }
-    .accent { color: var(--accent); }
-
-    .muted { color: var(--muted); }
-
-    .stack { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
-
     #workspace { display: none; height: 100vh; }
 
     header {
       background: var(--panel);
-      padding: 12px 16px;
+      padding: 10px 16px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid var(--border);
     }
 
-    header .left, header .right { display: flex; gap: 12px; align-items: center; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #0f0f14;
+      padding: 6px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .profile {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .profile.active { border-color: white; }
+
+    input[type=color] {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
 
     #viewer {
-      height: calc(100vh - 64px);
+      height: calc(100vh - 60px);
       overflow-y: auto;
-      overflow-x: hidden;
-      padding: 28px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 36px;
+      padding: 28px 0;
     }
 
     .page { position: relative; }
-    canvas { display: block; }
-
-    .room-code {
-      color: var(--accent);
-      font-weight: 700;
-      letter-spacing: 2px;
-    }
   </style>
 </head>
 <body>
 
 <div class="center" id="home">
   <div class="card">
-    <h1>Team<span class="accent">PDF</span></h1>
+    <h1>Team<span style="color:#b00b55">PDF</span></h1>
     <p class="muted">Live collaborative PDF annotation</p>
-
-    <div class="stack">
-      <button onclick="hostRoom()">Host a Session</button>
-      <input id="joinInput" class="input" placeholder="ROOM CODE" />
-      <button class="secondary" onclick="joinRoom()">Join Session</button>
-    </div>
+    <button onclick="hostRoom()">Host Session</button>
+    <input id="joinInput" class="input" placeholder="ROOM CODE" />
+    <button class="secondary" onclick="joinRoom()">Join</button>
   </div>
 </div>
 
 <div id="workspace">
   <header>
-    <div class="left">
-      <strong>Room</strong> <span class="room-code" id="roomLabel"></span>
+    <div class="toolbar">
+      <div id="profiles"></div>
+      <input type="color" id="colorPicker" />
+      <button class="icon" onclick="toggleEraser()">🧽</button>
     </div>
-    <div class="right">
-      <label class="file-label" for="pdfUpload">Upload PDF</label>
-      <input type="file" id="pdfUpload" accept="application/pdf" />
-      <button class="icon-btn" onclick="downloadAnnotatedPDF()">⬇ PDF</button>
+    <div>
+      <button class="secondary" onclick="downloadAnnotatedPDF()">⬇ PDF</button>
       <button class="secondary" onclick="leaveRoom()">Leave</button>
     </div>
   </header>
-
   <div id="viewer"></div>
 </div>
 
@@ -196,155 +179,152 @@
   const db = getDatabase(app);
   const storage = getStorage(app);
 
-  let roomCode = null;
-  let isHost = false;
-  let pdfUrl = null;
+  let roomCode, isHost = false;
+  let currentProfile = 0;
+  let erasing = false;
+
+  const profiles = ['#b00b55', '#4fd1c5', '#f6ad55'];
+
+  function buildProfiles() {
+    const wrap = document.getElementById('profiles');
+    wrap.innerHTML = '';
+    profiles.forEach((c, i) => {
+      const d = document.createElement('div');
+      d.className = 'profile' + (i === currentProfile ? ' active' : '');
+      d.style.background = c;
+      d.onclick = () => selectProfile(i);
+      wrap.appendChild(d);
+    });
+    document.getElementById('colorPicker').value = profiles[currentProfile];
+  }
+
+  function selectProfile(i) {
+    currentProfile = i;
+    erasing = false;
+    buildProfiles();
+  }
+
+  window.toggleEraser = () => erasing = !erasing;
+
+  document.getElementById('colorPicker').oninput = e => {
+    profiles[currentProfile] = e.target.value;
+    buildProfiles();
+  };
+
+  buildProfiles();
 
   window.hostRoom = () => {
     isHost = true;
-    roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    startSession();
+    roomCode = Math.random().toString(36).substring(2,7).toUpperCase();
+    start();
   };
 
   window.joinRoom = () => {
     roomCode = document.getElementById('joinInput').value.toUpperCase();
     if (!roomCode) return;
-    startSession();
+    start();
   };
 
   window.leaveRoom = () => location.reload();
 
-  async function startSession() {
+  async function start() {
     document.getElementById('home').style.display = 'none';
     document.getElementById('workspace').style.display = 'block';
-    document.getElementById('roomLabel').innerText = roomCode;
 
     const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
     const drawRef = ref(db, `rooms/${roomCode}/draw`);
 
     if (isHost) {
-      document.getElementById('pdfUpload').onchange = async e => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf';
+      input.onchange = async e => {
         const file = e.target.files[0];
-        if (!file) return;
-        const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
-        await uploadBytes(fileRef, file);
-        pdfUrl = await getDownloadURL(fileRef);
-        await set(pdfRef, pdfUrl);
-        renderPDF(pdfUrl);
+        const s = sRef(storage, `pdfs/${roomCode}.pdf`);
+        await uploadBytes(s, file);
+        const url = await getDownloadURL(s);
+        await set(pdfRef, url);
+        renderPDF(url);
       };
+      input.click();
     }
 
     const snap = await get(pdfRef);
-    if (snap.exists()) {
-      pdfUrl = snap.val();
-      await renderPDF(pdfUrl);
-    }
+    if (snap.exists()) renderPDF(snap.val());
 
-    onChildAdded(drawRef, snap => drawStroke(snap.val()));
+    onChildAdded(drawRef, s => drawStroke(s.val()));
   }
 
-  function drawStroke({ page, x1, y1, x2, y2 }) {
-    const canvas = document.getElementById(`draw-${page}`);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#b00b55';
+  function drawStroke(s) {
+    const c = document.getElementById(`draw-${s.page}`);
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = s.color;
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(s.x1, s.y1);
+    ctx.lineTo(s.x2, s.y2);
     ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   async function renderPDF(url) {
     const viewer = document.getElementById('viewer');
     viewer.innerHTML = '';
-
     const pdf = await pdfjsLib.getDocument(url).promise;
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.4 });
+      const vp = page.getViewport({ scale: 1.4 });
+      const wrap = document.createElement('div');
+      wrap.className = 'page';
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'page';
+      const pdfC = document.createElement('canvas');
+      const drawC = document.createElement('canvas');
+      pdfC.width = drawC.width = vp.width;
+      pdfC.height = drawC.height = vp.height;
+      drawC.id = `draw-${i}`;
+      drawC.style.position = 'absolute';
 
-      const pdfCanvas = document.createElement('canvas');
-      const drawCanvas = document.createElement('canvas');
+      wrap.append(pdfC, drawC);
+      viewer.appendChild(wrap);
 
-      pdfCanvas.width = drawCanvas.width = viewport.width;
-      pdfCanvas.height = drawCanvas.height = viewport.height;
-
-      drawCanvas.id = `draw-${i}`;
-      drawCanvas.style.position = 'absolute';
-      drawCanvas.style.top = 0;
-      drawCanvas.style.left = 0;
-
-      wrapper.appendChild(pdfCanvas);
-      wrapper.appendChild(drawCanvas);
-      viewer.appendChild(wrapper);
-
-      await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport }).promise;
-
-      if (isHost) enableDrawing(drawCanvas, i);
+      await page.render({ canvasContext: pdfC.getContext('2d'), viewport: vp }).promise;
+      if (isHost) enableDraw(drawC, i);
     }
   }
 
-  function enableDrawing(canvas, page) {
-    let drawing = false;
-    let lastX, lastY;
-    const drawRef = ref(db, `rooms/${roomCode}/draw`);
-
-    canvas.onmousedown = e => {
-      drawing = true;
-      const r = canvas.getBoundingClientRect();
-      lastX = e.clientX - r.left;
-      lastY = e.clientY - r.top;
-    };
-
-    canvas.onmouseup = canvas.onmouseleave = () => drawing = false;
-
-    canvas.onmousemove = e => {
-      if (!drawing) return;
-      const r = canvas.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      push(drawRef, { page, x1: lastX, y1: lastY, x2: x, y2: y });
-      lastX = x;
-      lastY = y;
+  function enableDraw(c, page) {
+    let d=false,lx,ly;
+    const dr = ref(db, `rooms/${roomCode}/draw`);
+    c.onmousedown=e=>{d=true;const r=c.getBoundingClientRect();lx=e.clientX-r.left;ly=e.clientY-r.top};
+    c.onmouseup=c.onmouseleave=()=>d=false;
+    c.onmousemove=e=>{
+      if(!d)return;
+      const r=c.getBoundingClientRect();
+      const x=e.clientX-r.left,y=e.clientY-r.top;
+      push(dr,{page,x1:lx,y1:ly,x2:x,y2:y,color:profiles[currentProfile],erase:erasing});
+      lx=x;ly=y;
     };
   }
 
   window.downloadAnnotatedPDF = async () => {
-    if (!pdfUrl) return alert('No PDF loaded');
-
-    const existingPdfBytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-
-    const pages = pdfDoc.getPages();
-
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i];
-      const canvas = document.getElementById(`draw-${i + 1}`);
-      if (!canvas) continue;
-
-      const png = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
-      const { width, height } = page.getSize();
-
-      page.drawImage(png, {
-        x: 0,
-        y: 0,
-        width,
-        height
-      });
-    }
-
-    const bytes = await pdfDoc.save();
-    const blob = new Blob([bytes], { type: 'application/pdf' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `TeamPDF-${roomCode}.pdf`;
-    link.click();
+    const snap = await get(ref(db, `rooms/${roomCode}/pdf`));
+    if (!snap.exists()) return;
+    const bytes = await fetch(snap.val()).then(r=>r.arrayBuffer());
+    const pdf = await PDFLib.PDFDocument.load(bytes);
+    pdf.getPages().forEach((p,i)=>{
+      const c=document.getElementById(`draw-${i+1}`);
+      if(!c)return;
+      p.drawImage(pdf.embedPng(c.toDataURL()),{x:0,y:0,width:p.getWidth(),height:p.getHeight()});
+    });
+    const out=await pdf.save();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([out],{type:'application/pdf'}));
+    a.download=`TeamPDF-${roomCode}.pdf`;
+    a.click();
   };
 </script>
 </body>
