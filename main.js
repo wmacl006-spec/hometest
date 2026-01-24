@@ -11,10 +11,11 @@ const firebaseConfig = {
   authDomain: "pdfproject-79cac.firebaseapp.com",
   databaseURL: "https://pdfproject-79cac-default-rtdb.firebaseio.com",
   projectId: "pdfproject-79cac",
-storageBucket: "pdfproject-79cac.appspot.com"
+  storageBucket: "pdfproject-79cac.appspot.com",
   messagingSenderId: "588286215167",
   appId: "1:588286215167:web:d31467d50048fd6916ddca"
 }
+
 
 const app = initializeApp(firebaseConfig)
 const db = getDatabase(app)
