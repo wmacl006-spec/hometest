@@ -13,27 +13,23 @@
       margin: 0;
       background: #0f0f0f;
       color: white;
-      font-family: Inter, system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     header {
-      padding: 10px;
-      background: #161616;
       display: flex;
       gap: 10px;
       align-items: center;
-    }
-
-    input[type="file"] {
-      color: white;
+      padding: 10px;
+      background: #161616;
     }
 
     .wrapper {
       position: relative;
       width: 100%;
       height: calc(100vh - 52px);
-      overflow: auto;
       background: #000;
+      overflow: auto;
     }
 
     canvas {
@@ -47,7 +43,7 @@
 <body>
 
 <header>
-  <input type="file" id="pdfInput" accept="application/pdf">
+  <input type="file" id="pdfInput" accept="application/pdf" />
   <span id="status">Waiting for PDF…</span>
 </header>
 
