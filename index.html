@@ -6,15 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
-:root {
+:root{
   --accent:#b00b55;
   --bg:#0e0e11;
   --panel:#16161b;
   --border:#2a2a33;
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
   background:var(--bg);
@@ -22,7 +20,6 @@ body{
   font-family:system-ui,sans-serif;
   overflow:hidden;
 }
-
 header{
   height:60px;
   background:var(--panel);
@@ -32,18 +29,19 @@ header{
   gap:8px;
   padding:0 12px;
 }
-
-button,input,select{
+button,input{
   background:#1f1f26;
   color:#fff;
   border:1px solid var(--border);
   border-radius:8px;
   padding:6px 10px;
 }
-
-button.primary{background:var(--accent);border-color:var(--accent)}
-button.tool.active{outline:2px solid var(--accent)}
+button.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+}
 .spacer{flex:1}
+.hidden{display:none!important}
 
 #viewer{
   position:absolute;
@@ -51,7 +49,6 @@ button.tool.active{outline:2px solid var(--accent)}
   overflow:auto;
   padding:20px;
 }
-
 .page{position:relative;margin:0 auto 30px;width:fit-content}
 canvas{display:block;border-radius:10px;border:1px solid var(--border)}
 .overlay{position:absolute;top:0;left:0}
@@ -67,42 +64,9 @@ canvas{display:block;border-radius:10px;border:1px solid var(--border)}
   flex-direction:column;
   gap:8px;
 }
-
-.color-palette{display:flex;gap:6px;justify-content:center}
-.color-swatch{
-  width:22px;height:22px;border-radius:50%;
-  border:2px solid var(--border);
-  cursor:pointer;
-}
-.color-swatch.active{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px rgba(176,11,85,.4)
-}
-
-.modal{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-.modal-content{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:16px;
-  width:420px;
-  max-height:80vh;
-  overflow:auto;
-}
-.setting-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.hidden{display:none!important}
 </style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
 
 <header>
@@ -123,19 +87,8 @@ canvas{display:block;border-radius:10px;border:1px solid var(--border)}
 <div id="viewer"></div>
 
 <div class="toolbar" id="toolbar">
-  <div class="color-palette" id="palette"></div>
-  <button id="pen" class="tool active">✏️</button>
-  <button id="eraser" class="tool">🧽</button>
-  <input id="colorPicker" type="color" />
-  <button id="settingsBtn">⚙</button>
-</div>
-
-<div class="modal" id="settingsModal">
-  <div class="modal-content">
-    <h3>Keybinds</h3>
-    <div id="settingsList"></div>
-    <button id="closeSettings">Close</button>
-  </div>
+  <button id="pen">✏️</button>
+  <button id="eraser">🧽</button>
 </div>
 
 <script type="module" src="./main.js"></script>
