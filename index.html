@@ -3,29 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <title>TeamPDF</title>
-  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #111;
+      color: #eee;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.5);
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #b00b55;
+    }
+
+    input {
+      width: 200px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #222;
+      color: #fff;
+      outline: none;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background: #b00b55;
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+  </style>
 </head>
 <body>
-  <h1>TeamPDF</h1>
 
-  <input id="roomCode" placeholder="Room Code" />
-  <br><br>
+  <div class="card">
+    <h1>TeamPDF</h1>
 
-  <button onclick="host()">Host</button>
-  <button onclick="join()">Join</button>
+    <input id="roomCode" placeholder="Room Code" />
+    <br>
+
+    <button onclick="goHost()">Host</button>
+    <button onclick="goJoin()">Join</button>
+  </div>
 
   <script>
-    function host() {
-      const code = roomCode.value.trim();
-      if (!code) return alert("Enter room code");
-      location.href = `host.html?room=${code}`;
+    function goHost() {
+      if (!roomCode.value) return;
+      location.href = `host.html?room=${roomCode.value}`;
     }
-
-    function join() {
-      const code = roomCode.value.trim();
-      if (!code) return alert("Enter room code");
-      location.href = `join.html?room=${code}`;
+    function goJoin() {
+      if (!roomCode.value) return;
+      location.href = `join.html?room=${roomCode.value}`;
     }
   </script>
+
 </body>
 </html>
