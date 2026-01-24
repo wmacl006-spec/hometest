@@ -5,12 +5,16 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-s
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBUQgksDWqis5CYkivxYnQTHY9GHiSR8SA",
+  authDomain: "pdfproject-79cac.firebaseapp.com",
+  databaseURL: "https://pdfproject-79cac-default-rtdb.firebaseio.com",
+  projectId: "pdfproject-79cac",
+
+  // ❗ FIXED:
+  storageBucket: "pdfproject-79cac.appspot.com",
+
+  messagingSenderId: "588286215167",
+  appId: "1:588286215167:web:d31467d50048fd6916ddca"
 };
 
 export const app = initializeApp(firebaseConfig);
