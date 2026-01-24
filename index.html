@@ -58,15 +58,13 @@ header {
   gap:32px;
 }
 
-/* ---------- PDF Layers ---------- */
+/* ---------- PDF Layers (original look) ---------- */
 .page {
   position:relative;
   box-shadow:0 20px 40px rgba(0,0,0,.4);
-  border-radius:12px;
-  overflow:hidden;
 }
 
-.pdf-layer { position:relative; z-index:1; border-radius:12px; }
+.pdf-layer { position:relative; z-index:1; }
 .draw-layer {
   position:absolute;
   inset:0;
@@ -219,7 +217,13 @@ input#joinInput:focus {
   box-shadow:0 0 10px rgba(255,0,90,0.5);
 }
 
-/* ---------- Upload/Download Buttons ---------- */
+/* ---------- Upload/Download Buttons Side by Side ---------- */
+#workspace header > div:last-child {
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
 #uploadControls label {
   background: linear-gradient(135deg,#00c2ff,#0077ff);
   color:white;
@@ -231,7 +235,7 @@ input#joinInput:focus {
 }
 
 #uploadControls label:hover {
-  transform:scale(1.05);
+  transform: scale(1.05);
   box-shadow:0 6px 20px rgba(0, 200, 255,0.5);
 }
 
