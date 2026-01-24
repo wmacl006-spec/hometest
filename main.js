@@ -52,8 +52,8 @@ const clientId = crypto.randomUUID();
 let roomId = null;
 let isTeacher = false;
 let pdfDoc = null;
-let annotationsLoaded = false;
-let unsubRoom, unsubAnnotations;
+let unsubRoom = null;
+let unsubAnnotations = null;
 
 // ---------- UI ----------
 function enterRoomUI() {
@@ -64,7 +64,7 @@ function enterRoomUI() {
   if (isTeacher) {
     uploadBtn.classList.remove("hidden");
     toolbar.style.display = "flex";
-    renderColorHistory(); // FIX #1
+    renderColorHistory();
   }
 }
 
@@ -80,11 +80,11 @@ function exitRoomUI() {
 function renderColorHistory() {
   colorHistoryEl.innerHTML = "";
   colorHistory.forEach((c, i) => {
-    const d = document.createElement("div");
-    d.className = "color-swatch" + (i === 0 ? " active" : "");
-    d.style.background = c;
-    d.onclick = () => setActiveColor(c);
-    colorHistoryEl.appendChild(d);
+    const sw = document.createElement("div");
+    sw.className = "color-swatch" + (i === 0 ? " active" : "");
+    sw.style.background = c;
+    sw.onclick = () => setActiveColor(c);
+    colorHistoryEl.appendChild(sw);
   });
 }
 
@@ -127,15 +127,19 @@ document.getElementById("createRoom").onclick = async () => {
 document.getElementById("joinRoom").onclick = async () => {
   roomId = roomInput.value.trim();
   if (!roomId) return;
+
   isTeacher = false;
   roomLabel.textContent = `Room ${roomId}`;
   enterRoomUI();
 
   const snap = await getDoc(doc(db, "rooms", roomId));
-  if (snap.exists() && snap.data().pdfUrl) loadPDF(snap.data().pdfUrl);
+  if (snap.exists() && snap.data().pdfUrl) {
+    await loadPDF(snap.data().pdfUrl);
+    await loadAnnotationHistory();   // ← LOAD ALL PAST DRAWINGS FIRST
+  }
 
+  listenAnnotations();               // ← THEN LISTEN FOR NEW ONES
   listenRoom();
-  listenAnnotations();
 };
 
 leaveBtn.onclick = () => {
@@ -150,13 +154,14 @@ uploadBtn.onclick = () => pdfUpload.click();
 
 pdfUpload.onchange = async e => {
   const file = e.target.files[0];
-  const refPdf = ref(storage, `pdfs/${roomId}.pdf`);
-  await uploadBytes(refPdf, file);
-  const url = await getDownloadURL(refPdf);
+  const pdfRef = ref(storage, `pdfs/${roomId}.pdf`);
+  await uploadBytes(pdfRef, file);
+  const url = await getDownloadURL(pdfRef);
   await updateDoc(doc(db, "rooms", roomId), { pdfUrl: url });
   await loadPDF(url);
-  listenRoom();
+  await loadAnnotationHistory();
   listenAnnotations();
+  listenRoom();
 };
 
 // ---------- Firestore ----------
@@ -171,16 +176,17 @@ function listenAnnotations() {
   unsubAnnotations?.();
   unsubAnnotations = onSnapshot(
     collection(db, "rooms", roomId, "annotations"),
-    s => {
-      if (!annotationsLoaded) return;
-      s.docChanges().forEach(c => {
-        if (c.doc.data().clientId !== clientId) drawAnnotation(c.doc.data());
+    snap => {
+      snap.docChanges().forEach(c => {
+        if (c.type === "added" && c.doc.data().clientId !== clientId) {
+          drawAnnotation(c.doc.data());
+        }
       });
     }
   );
 }
 
-// ---------- PDF ----------
+// ---------- Load PDF ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
   pdfDoc = await pdfjsLib.getDocument(url).promise;
@@ -205,8 +211,6 @@ async function loadPDF(url) {
     await page.render({ canvasContext: base.getContext("2d"), viewport: vp }).promise;
     setupDrawing(overlay, i);
   }
-
-  annotationsLoaded = true;
 }
 
 // ---------- Drawing ----------
@@ -288,46 +292,3 @@ function drawAnnotation(a) {
   ctx.stroke();
   ctx.globalCompositeOperation = "source-over";
 }
-
-// ---------- Download (FIX #2) ----------
-downloadBtn.onclick = () => {
-  if (!pdfDoc) return;
-
-  const { jsPDF } = window.jspdf;
-  const pages = document.querySelectorAll(".page");
-  const dpr = window.devicePixelRatio || 1;
-  let pdf;
-
-  pages.forEach((p, i) => {
-    const base = p.children[0];
-    const overlay = p.children[1];
-
-    const w = base.width / dpr;
-    const h = base.height / dpr;
-
-    const merged = document.createElement("canvas");
-    merged.width = base.width;
-    merged.height = base.height;
-
-    const ctx = merged.getContext("2d");
-    ctx.drawImage(base, 0, 0);
-    ctx.drawImage(overlay, 0, 0);
-
-    if (i === 0) {
-      pdf = new jsPDF({ unit: "px", format: [w, h] });
-    } else {
-      pdf.addPage([w, h]);
-    }
-
-    pdf.addImage(
-      merged.toDataURL("image/png"),
-      "PNG",
-      0,
-      0,
-      w,
-      h
-    );
-  });
-
-  pdf.save(`room-${roomId}.pdf`);
-};
