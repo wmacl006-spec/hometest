@@ -2,15 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live PDF Editor (Firebase)</title>
+  <title>Live PDF Whiteboard (Firebase)</title>
+
+  <!-- Firebase (compat SDK) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    canvas { border: 1px solid #333; cursor: crosshair; }
+    canvas { border: 1px solid #333; cursor: crosshair; display: block; }
     #controls { margin-bottom: 10px; }
+    #status { margin-top: 10px; font-size: 14px; color: #333; }
   </style>
 </head>
 <body>
@@ -19,15 +25,18 @@
 
 <div id="controls">
   <input type="file" id="pdfInput" accept="application/pdf" />
-  <button onclick="createSession()">Create Session</button>
+  <button id="createBtn">Create Session</button>
   <input type="text" id="sessionCode" placeholder="Enter session code" />
-  <button onclick="joinSession()">Join Session</button>
+  <button id="joinBtn">Join Session</button>
 </div>
 
 <canvas id="pdfCanvas"></canvas>
+<div id="status"></div>
 
 <script>
-// ---------------- FIREBASE CONFIG ----------------
+/***********************
+ * FIREBASE CONFIG
+ ***********************/
 const firebaseConfig = {
   apiKey: "AIzaSyBUQgksDWqis5CYkivxYnQTHY9GHiSR8SA",
   authDomain: "pdfproject-79cac.firebaseapp.com",
@@ -35,37 +44,62 @@ const firebaseConfig = {
   storageBucket: "pdfproject-79cac.appspot.com",
 };
 
-
 firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
 const db = firebase.firestore();
 
-// ---------------- GLOBALS ----------------
+/***********************
+ * GLOBAL STATE
+ ***********************/
 const canvas = document.getElementById('pdfCanvas');
 const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+
 let pdfDoc = null;
 let page = null;
 let drawing = false;
 let sessionId = null;
+let isHost = false;
+let lastPoint = null;
 
-// ---------------- PDF UPLOAD + RENDER ----------------
+/***********************
+ * UI HELPERS
+ ***********************/
+function setStatus(msg) {
+  statusEl.textContent = msg;
+}
+
+/***********************
+ * PDF UPLOAD + RENDER
+ ***********************/
 document.getElementById('pdfInput').addEventListener('change', async (e) => {
+  if (!isHost) {
+    alert('Only the session creator can upload a PDF.');
+    e.target.value = '';
+    return;
+  }
+
   const file = e.target.files[0];
   if (!file) return;
+
+  setStatus('Uploading PDF...');
 
   const ref = storage.ref(`pdfs/${Date.now()}_${file.name}`);
   await ref.put(file);
   const url = await ref.getDownloadURL();
 
+  await db.collection('sessions').doc(sessionId).set({ pdfUrl: url }, { merge: true });
   await loadPDF(url);
-  if (sessionId) {
-    await db.collection('sessions').doc(sessionId).set({ pdfUrl: url }, { merge: true });
-  }
+
+  setStatus('PDF loaded and shared.');
 });
 
 async function loadPDF(url) {
-  pdfDoc = await pdfjsLib.getDocument(url).promise;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  pdfDoc = await pdfjsLib.getDocument({ url, withCredentials: false }).promise;
   page = await pdfDoc.getPage(1);
+
   const viewport = page.getViewport({ scale: 1.5 });
   canvas.width = viewport.width;
   canvas.height = viewport.height;
@@ -73,53 +107,108 @@ async function loadPDF(url) {
   await page.render({ canvasContext: ctx, viewport }).promise;
 }
 
-// ---------------- DRAWING ----------------
+/***********************
+ * DRAWING (HOST ONLY)
+ ***********************/
 canvas.addEventListener('mousedown', (e) => {
+  if (!isHost) return;
   drawing = true;
-  draw(e.offsetX, e.offsetY, false);
+  lastPoint = { x: e.offsetX, y: e.offsetY };
 });
 
 canvas.addEventListener('mousemove', (e) => {
-  if (!drawing) return;
-  draw(e.offsetX, e.offsetY, true);
+  if (!drawing || !isHost) return;
+
+  const current = { x: e.offsetX, y: e.offsetY };
+
+  drawLine(lastPoint, current);
+  sendStroke(lastPoint, current);
+
+  lastPoint = current;
 });
 
-canvas.addEventListener('mouseup', () => drawing = false);
-canvas.addEventListener('mouseleave', () => drawing = false);
+['mouseup', 'mouseleave'].forEach(evt =>
+  canvas.addEventListener(evt, () => {
+    drawing = false;
+    lastPoint = null;
+  })
+);
 
-function draw(x, y, dragging) {
-  ctx.fillStyle = 'red';
+function drawLine(p1, p2) {
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+
   ctx.beginPath();
-  ctx.arc(x, y, 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (sessionId) {
-    db.collection('sessions').doc(sessionId)
-      .collection('strokes')
-      .add({ x, y, t: Date.now() });
-  }
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
 }
 
-// ---------------- LIVE SYNC ----------------
-async function createSession() {
-  const doc = await db.collection('sessions').add({ created: Date.now() });
-  sessionId = doc.id;
-  alert('Session code: ' + sessionId);
-  listenForStrokes();
-}
-
-async function joinSession() {
-  sessionId = document.getElementById('sessionCode').value.trim();
+async function sendStroke(p1, p2) {
   if (!sessionId) return;
 
-  const snap = await db.collection('sessions').doc(sessionId).get();
-  if (!snap.exists) return alert('Invalid session');
+  await db.collection('sessions').doc(sessionId)
+    .collection('strokes')
+    .add({
+      x1: p1.x,
+      y1: p1.y,
+      x2: p2.x,
+      y2: p2.y,
+      t: Date.now()
+    });
+}
+
+/***********************
+ * SESSION MANAGEMENT
+ ***********************/
+document.getElementById('createBtn').addEventListener('click', async () => {
+  const doc = await db.collection('sessions').add({
+    created: Date.now()
+  });
+
+  sessionId = doc.id;
+  isHost = true;
+
+  setStatus(`Session created. Code: ${sessionId}`);
+  listenForPDF();
+  listenForStrokes();
+});
+
+document.getElementById('joinBtn').addEventListener('click', async () => {
+  const code = document.getElementById('sessionCode').value.trim();
+  if (!code) return;
+
+  const snap = await db.collection('sessions').doc(code).get();
+  if (!snap.exists) {
+    alert('Invalid session code');
+    return;
+  }
+
+  sessionId = code;
+  isHost = false;
+
+  setStatus('Joined session as viewer.');
 
   if (snap.data().pdfUrl) {
     await loadPDF(snap.data().pdfUrl);
   }
 
+  listenForPDF();
   listenForStrokes();
+});
+
+/***********************
+ * LIVE SYNC
+ ***********************/
+function listenForPDF() {
+  db.collection('sessions').doc(sessionId)
+    .onSnapshot(async snap => {
+      const data = snap.data();
+      if (data && data.pdfUrl) {
+        await loadPDF(data.pdfUrl);
+      }
+    });
 }
 
 function listenForStrokes() {
@@ -129,11 +218,8 @@ function listenForStrokes() {
     .onSnapshot(snapshot => {
       snapshot.docChanges().forEach(change => {
         if (change.type === 'added') {
-          const { x, y } = change.doc.data();
-          ctx.fillStyle = 'red';
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, Math.PI * 2);
-          ctx.fill();
+          const { x1, y1, x2, y2 } = change.doc.data();
+          drawLine({ x: x1, y: y1 }, { x: x2, y: y2 });
         }
       });
     });
