@@ -12,11 +12,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
 <style>
+:root {
+  --bg: #0e0e11;
+  --panel: #18181d;
+  --accent: #3b82f6;
+}
+
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
-  background: #0e0e11;
   font-family: Inter, sans-serif;
-  color: white;
+  background: var(--bg);
+  color: #fff;
 }
 
 #home, #workspace {
@@ -34,9 +42,21 @@ body {
 header {
   width: 100%;
   padding: 12px 16px;
-  background: #18181d;
+  background: var(--panel);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.file-label {
+  background: var(--accent);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#uploadControls input {
+  display: none;
 }
 
 #viewer {
@@ -47,15 +67,16 @@ header {
   background: #111;
 }
 
-canvas {
+#pdfCanvas,
+#drawCanvas {
   display: block;
   margin: auto;
 }
 
 #drawCanvas {
   position: absolute;
-  top: 0;
   left: 50%;
+  top: 0;
   transform: translateX(-50%);
 }
 
@@ -64,7 +85,7 @@ canvas {
   position: fixed;
   bottom: 16px;
   right: 16px;
-  background: #18181d;
+  background: var(--panel);
   padding: 10px;
   border-radius: 12px;
   display: none;
@@ -72,22 +93,45 @@ canvas {
   align-items: center;
 }
 
-.tool {
+.tool-btn {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+  border: 2px solid #444;
   cursor: pointer;
 }
 
 #eraser {
   border-radius: 6px;
   background: #222;
+  color: #fff;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-input[type="range"] { width: 90px; }
+input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+input[type="range"] {
+  width: 90px;
+}
+
+#downloadBtn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
 </style>
 </head>
 
@@ -99,8 +143,11 @@ input[type="range"] { width: 90px; }
 
 <div id="workspace">
   <header>
-    <div>Room: HOST</div>
-    <input type="file" id="pdfUpload" accept="application/pdf">
+    <div>Room: <span id="roomLabel"></span></div>
+    <div id="uploadControls">
+      <label class="file-label" for="pdfUpload">Upload PDF</label>
+      <input type="file" id="pdfUpload" accept="application/pdf">
+    </div>
   </header>
 
   <div id="viewer">
@@ -111,13 +158,13 @@ input[type="range"] { width: 90px; }
 
 <!-- TOOLBAR -->
 <div id="toolbar">
-  <div class="tool" style="background:#ef4444" onclick="setColor('#ef4444')"></div>
-  <div class="tool" style="background:#22c55e" onclick="setColor('#22c55e')"></div>
-  <div class="tool" style="background:#3b82f6" onclick="setColor('#3b82f6')"></div>
-  <div id="eraser" class="tool" onclick="setEraser()">[ ]</div>
+  <div class="tool-btn" style="background:#ef4444" onclick="setColor('#ef4444')"></div>
+  <div class="tool-btn" style="background:#22c55e" onclick="setColor('#22c55e')"></div>
+  <div class="tool-btn" style="background:#3b82f6" onclick="setColor('#3b82f6')"></div>
+  <div id="eraser" class="tool-btn" onclick="setEraser()">[ ]</div>
   <input type="color" onchange="setColor(this.value)">
   <input type="range" min="1" max="20" value="4" onchange="brushSize=this.value">
-  <button onclick="downloadPDF()">⬇</button>
+  <button id="downloadBtn" onclick="downloadPDF()">Download</button>
 </div>
 
 <script>
@@ -128,9 +175,6 @@ let isHost = false;
 let brushColor = "#3b82f6";
 let brushSize = 4;
 let drawing = false;
-
-let strokes = [];
-let currentStroke = null;
 let loadedPdfBytes = null;
 
 const pdfCanvas = document.getElementById("pdfCanvas");
@@ -141,6 +185,7 @@ function startHost() {
   isHost = true;
   document.getElementById("home").style.display = "none";
   document.getElementById("workspace").style.display = "flex";
+  document.getElementById("roomLabel").innerText = "HOST";
   document.getElementById("toolbar").style.display = "flex";
 }
 
@@ -149,63 +194,40 @@ document.getElementById("pdfUpload").addEventListener("change", async e => {
   if (!file) return;
 
   loadedPdfBytes = await file.arrayBuffer();
+
   const pdf = await pdfjsLib.getDocument({ data: loadedPdfBytes }).promise;
   const page = await pdf.getPage(1);
   const viewport = page.getViewport({ scale: 1.5 });
 
-  pdfCanvas.width = drawCanvas.width = viewport.width;
-  pdfCanvas.height = drawCanvas.height = viewport.height;
+  pdfCanvas.width = viewport.width;
+  pdfCanvas.height = viewport.height;
+  drawCanvas.width = viewport.width;
+  drawCanvas.height = viewport.height;
 
   await page.render({
     canvasContext: pdfCanvas.getContext("2d"),
     viewport
   }).promise;
-
-  redrawAllStrokes(); // IMPORTANT
 });
 
 /* Drawing */
-drawCanvas.onmousedown = e => {
+drawCanvas.addEventListener("mousedown", e => {
   if (!isHost) return;
   drawing = true;
-  currentStroke = {
-    color: brushColor,
-    size: brushSize,
-    erase: dctx.globalCompositeOperation === "destination-out",
-    points: [{ x: e.offsetX, y: e.offsetY }]
-  };
-};
+  dctx.beginPath();
+  dctx.moveTo(e.offsetX, e.offsetY);
+});
 
-drawCanvas.onmousemove = e => {
+drawCanvas.addEventListener("mousemove", e => {
   if (!drawing) return;
-  currentStroke.points.push({ x: e.offsetX, y: e.offsetY });
-  redrawAllStrokes();
-};
+  dctx.lineTo(e.offsetX, e.offsetY);
+  dctx.strokeStyle = brushColor;
+  dctx.lineWidth = brushSize;
+  dctx.lineCap = "round";
+  dctx.stroke();
+});
 
-window.onmouseup = () => {
-  if (drawing) strokes.push(currentStroke);
-  drawing = false;
-};
-
-/* Redraw everything */
-function redrawAllStrokes() {
-  dctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-
-  for (const s of strokes.concat(currentStroke || [])) {
-    dctx.globalCompositeOperation = s.erase ? "destination-out" : "source-over";
-    dctx.strokeStyle = s.color;
-    dctx.lineWidth = s.size;
-    dctx.lineCap = "round";
-    dctx.beginPath();
-
-    s.points.forEach((p, i) => {
-      if (i === 0) dctx.moveTo(p.x, p.y);
-      else dctx.lineTo(p.x, p.y);
-    });
-
-    dctx.stroke();
-  }
-}
+window.addEventListener("mouseup", () => drawing = false);
 
 /* Tools */
 function setColor(c) {
@@ -217,15 +239,27 @@ function setEraser() {
   dctx.globalCompositeOperation = "destination-out";
 }
 
-/* Download */
+/* Download PDF with drawings */
 async function downloadPDF() {
+  if (!loadedPdfBytes) return;
+
   const pdfDoc = await PDFLib.PDFDocument.load(loadedPdfBytes);
   const page = pdfDoc.getPages()[0];
-  const img = await pdfDoc.embedPng(drawCanvas.toDataURL());
-  const { width, height } = page.getSize();
-  page.drawImage(img, { x: 0, y: 0, width, height });
 
-  const blob = new Blob([await pdfDoc.save()], { type: "application/pdf" });
+  const png = drawCanvas.toDataURL("image/png");
+  const img = await pdfDoc.embedPng(png);
+
+  const { width, height } = page.getSize();
+  page.drawImage(img, {
+    x: 0,
+    y: 0,
+    width,
+    height
+  });
+
+  const bytes = await pdfDoc.save();
+  const blob = new Blob([bytes], { type: "application/pdf" });
+
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "annotated.pdf";
