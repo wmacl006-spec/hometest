@@ -1,294 +1,142 @@
-// ---------- PDF.js ----------
-import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
-
-// ---------- Firebase ----------
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, doc, setDoc, getDoc, updateDoc,
-  onSnapshot, collection, addDoc, getDocs, query, orderBy
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import {
-  getStorage, ref, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-// ---------- Config ----------
-const firebaseConfig = {
-  apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
-  authDomain: "teampdf-7ec12.firebaseapp.com",
-  projectId: "teampdf-7ec12",
-  storageBucket: "teampdf-7ec12.firebasestorage.app",
-  messagingSenderId: "307072046237",
-  appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
-};
-
-// ---------- Init ----------
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
 // ---------- DOM ----------
-const viewer = document.getElementById("viewer");
-const pdfUpload = document.getElementById("pdfUpload");
-const uploadBtn = document.getElementById("uploadBtn");
-const roomLabel = document.getElementById("roomLabel");
-const lobbyUI = document.getElementById("lobbyUI");
-const leaveBtn = document.getElementById("leaveRoom");
 const toolbar = document.getElementById("toolbar");
-
+const colorPaletteEl = document.getElementById("colorPalette");
+const colorPicker = document.getElementById("colorPicker");
 const penBtn = document.getElementById("penTool");
 const eraserBtn = document.getElementById("eraserTool");
-const colorPicker = document.getElementById("colorPicker");
-const eraserCursor = document.getElementById("eraserCursor");
-const downloadBtn = document.getElementById("downloadPdf");
-const colorHistoryEl = document.getElementById("colorHistory");
 
-// ---------- State ----------
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsModal = document.getElementById("settingsModal");
+const settingsList = document.getElementById("settingsList");
+const closeSettings = document.getElementById("closeSettings");
+
+// ---------- Draw State ----------
 const drawState = { tool: "pen", color: "#b00b55" };
-const colorHistory = [drawState.color];
-const clientId = crypto.randomUUID();
 
-let roomId = null;
-let isTeacher = false;
-let pdfDoc = null;
-let unsubRoom = null;
-let unsubAnnotations = null;
-
-// ---------- UI ----------
-function enterRoomUI() {
-  lobbyUI.classList.add("hidden");
-  roomLabel.classList.remove("hidden");
-  leaveBtn.classList.remove("hidden");
-
-  if (isTeacher) {
-    uploadBtn.classList.remove("hidden");
-    toolbar.style.display = "flex";
-    renderColorHistory();
-  }
-}
-
-function exitRoomUI() {
-  lobbyUI.classList.remove("hidden");
-  roomLabel.classList.add("hidden");
-  leaveBtn.classList.add("hidden");
-  uploadBtn.classList.add("hidden");
-  toolbar.style.display = "none";
-}
-
-// ---------- Color History ----------
-function renderColorHistory() {
-  colorHistoryEl.innerHTML = "";
-  colorHistory.forEach((c, i) => {
-    const sw = document.createElement("div");
-    sw.className = "color-swatch" + (i === 0 ? " active" : "");
-    sw.style.background = c;
-    sw.onclick = () => setActiveColor(c);
-    colorHistoryEl.appendChild(sw);
-  });
-}
+// ---------- Palette ----------
+const PALETTE = ["#b00b55", "#ffffff", "#00c2ff", "#22c55e", "#f97316"];
 
 function setActiveColor(c) {
   drawState.color = c;
   colorPicker.value = c;
-  const i = colorHistory.indexOf(c);
-  if (i !== -1) colorHistory.splice(i, 1);
-  colorHistory.unshift(c);
-  if (colorHistory.length > 5) colorHistory.length = 5;
-  renderColorHistory();
+  renderPalette();
 }
 
-colorPicker.oninput = e => setActiveColor(e.target.value);
+function renderPalette() {
+  colorPaletteEl.innerHTML = "";
+  PALETTE.forEach(c => {
+    const d = document.createElement("div");
+    d.className = "color-swatch" + (c === drawState.color ? " active" : "");
+    d.style.background = c;
+    d.onclick = () => setActiveColor(c);
+    colorPaletteEl.appendChild(d);
+  });
+}
+
+colorPicker.oninput = e => {
+  PALETTE[0] = e.target.value;
+  setActiveColor(e.target.value);
+};
 
 // ---------- Tools ----------
 penBtn.onclick = () => {
   drawState.tool = "pen";
   penBtn.classList.add("active");
   eraserBtn.classList.remove("active");
-  eraserCursor.style.display = "none";
 };
 
 eraserBtn.onclick = () => {
   drawState.tool = "eraser";
   eraserBtn.classList.add("active");
   penBtn.classList.remove("active");
-  eraserCursor.style.display = "block";
 };
 
-// ---------- Room ----------
-document.getElementById("createRoom").onclick = async () => {
-  roomId = crypto.randomUUID().slice(0, 6);
-  isTeacher = true;
-  await setDoc(doc(db, "rooms", roomId), { createdAt: Date.now() });
-  roomLabel.textContent = `Room ${roomId}`;
-  enterRoomUI();
+// ---------- KEYBIND SYSTEM ----------
+const keybinds = {
+  eraser: { key: "e", mode: "hold" },
+  color1: { key: "1", mode: "toggle" },
+  color2: { key: "2", mode: "toggle" },
+  color3: { key: "3", mode: "toggle" },
+  color4: { key: "4", mode: "toggle" },
+  color5: { key: "5", mode: "toggle" }
 };
 
-document.getElementById("joinRoom").onclick = async () => {
-  roomId = roomInput.value.trim();
-  if (!roomId) return;
+let heldAction = null;
+let previousTool = null;
 
-  isTeacher = false;
-  roomLabel.textContent = `Room ${roomId}`;
-  enterRoomUI();
+// ---------- Keyboard Handling ----------
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
 
-  const snap = await getDoc(doc(db, "rooms", roomId));
-  if (snap.exists() && snap.data().pdfUrl) {
-    await loadPDF(snap.data().pdfUrl);
-    await loadAnnotationHistory();   // ← LOAD ALL PAST DRAWINGS FIRST
-  }
-
-  listenAnnotations();               // ← THEN LISTEN FOR NEW ONES
-  listenRoom();
-};
-
-leaveBtn.onclick = () => {
-  unsubRoom?.();
-  unsubAnnotations?.();
-  viewer.innerHTML = "";
-  exitRoomUI();
-};
-
-// ---------- Upload ----------
-uploadBtn.onclick = () => pdfUpload.click();
-
-pdfUpload.onchange = async e => {
-  const file = e.target.files[0];
-  const pdfRef = ref(storage, `pdfs/${roomId}.pdf`);
-  await uploadBytes(pdfRef, file);
-  const url = await getDownloadURL(pdfRef);
-  await updateDoc(doc(db, "rooms", roomId), { pdfUrl: url });
-  await loadPDF(url);
-  await loadAnnotationHistory();
-  listenAnnotations();
-  listenRoom();
-};
-
-// ---------- Firestore ----------
-function listenRoom() {
-  unsubRoom?.();
-  unsubRoom = onSnapshot(doc(db, "rooms", roomId), s => {
-    if (s.data()?.pdfUrl && !pdfDoc) loadPDF(s.data().pdfUrl);
-  });
-}
-
-function listenAnnotations() {
-  unsubAnnotations?.();
-  unsubAnnotations = onSnapshot(
-    collection(db, "rooms", roomId, "annotations"),
-    snap => {
-      snap.docChanges().forEach(c => {
-        if (c.type === "added" && c.doc.data().clientId !== clientId) {
-          drawAnnotation(c.doc.data());
-        }
-      });
+  for (const [action, cfg] of Object.entries(keybinds)) {
+    if (e.key.toLowerCase() === cfg.key && !e.repeat) {
+      if (cfg.mode === "toggle") runAction(action);
+      else if (cfg.mode === "hold") {
+        heldAction = action;
+        previousTool = drawState.tool;
+        runAction(action);
+      }
     }
-  );
-}
+  }
+});
 
-// ---------- Load PDF ----------
-async function loadPDF(url) {
-  viewer.innerHTML = "";
-  pdfDoc = await pdfjsLib.getDocument(url).promise;
+document.addEventListener("keyup", e => {
+  if (!heldAction) return;
+  if (e.key.toLowerCase() === keybinds[heldAction].key) {
+    if (heldAction === "eraser") {
+      drawState.tool = previousTool;
+      penBtn.classList.toggle("active", previousTool === "pen");
+      eraserBtn.classList.toggle("active", previousTool === "eraser");
+    }
+    heldAction = null;
+  }
+});
 
-  for (let i = 1; i <= pdfDoc.numPages; i++) {
-    const page = await pdfDoc.getPage(i);
-    const vp = page.getViewport({ scale: 1.4 });
-
-    const wrap = document.createElement("div");
-    wrap.className = "page";
-
-    const base = document.createElement("canvas");
-    const overlay = document.createElement("canvas");
-
-    base.width = overlay.width = vp.width;
-    base.height = overlay.height = vp.height;
-    overlay.className = "overlay";
-
-    wrap.append(base, overlay);
-    viewer.appendChild(wrap);
-
-    await page.render({ canvasContext: base.getContext("2d"), viewport: vp }).promise;
-    setupDrawing(overlay, i);
+function runAction(action) {
+  if (action === "eraser") {
+    eraserBtn.click();
+  } else if (action.startsWith("color")) {
+    const idx = Number(action.slice(-1)) - 1;
+    setActiveColor(PALETTE[idx]);
   }
 }
 
-// ---------- Drawing ----------
-function setupDrawing(canvas, page) {
-  if (!isTeacher) return;
-  const ctx = canvas.getContext("2d");
-  let drawing = false;
-  let pts = [];
+// ---------- SETTINGS UI ----------
+settingsBtn.onclick = () => {
+  settingsList.innerHTML = "";
 
-  const pos = e => {
-    const r = canvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - r.left) / r.width,
-      y: (e.clientY - r.top) / r.height
-    };
-  };
+  Object.entries(keybinds).forEach(([action, cfg]) => {
+    const row = document.createElement("div");
+    row.className = "setting-row";
 
-  canvas.onmousedown = e => {
-    drawing = true;
-    pts = [];
-    const p = pos(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x * canvas.width, p.y * canvas.height);
-    pts.push(p);
-  };
+    const label = document.createElement("label");
+    label.textContent = action;
 
-  canvas.onmousemove = e => {
-    if (!drawing) return;
-    const p = pos(e);
-    pts.push(p);
+    const keyInput = document.createElement("input");
+    keyInput.value = cfg.key;
+    keyInput.oninput = e => cfg.key = e.target.value.toLowerCase();
 
-    ctx.globalCompositeOperation =
-      drawState.tool === "eraser" ? "destination-out" : "source-over";
-    ctx.strokeStyle = drawState.color;
-    ctx.lineWidth = drawState.tool === "eraser" ? 24 : 2;
-    ctx.lineCap = "round";
-
-    ctx.lineTo(p.x * canvas.width, p.y * canvas.height);
-    ctx.stroke();
-  };
-
-  canvas.onmouseup = async () => {
-    drawing = false;
-    ctx.globalCompositeOperation = "source-over";
-    if (pts.length < 2) return;
-
-    await addDoc(collection(db, "rooms", roomId, "annotations"), {
-      page,
-      points: pts,
-      tool: drawState.tool,
-      color: drawState.color,
-      clientId,
-      createdAt: Date.now()
+    const modeSelect = document.createElement("select");
+    ["toggle", "hold"].forEach(m => {
+      const o = document.createElement("option");
+      o.value = m;
+      o.textContent = m;
+      if (cfg.mode === m) o.selected = true;
+      modeSelect.appendChild(o);
     });
-  };
-}
+    modeSelect.onchange = e => cfg.mode = e.target.value;
 
-// ---------- Draw ----------
-function drawAnnotation(a) {
-  const page = viewer.children[a.page - 1];
-  if (!page) return;
-
-  const canvas = page.querySelector(".overlay");
-  const ctx = canvas.getContext("2d");
-
-  ctx.beginPath();
-  ctx.globalCompositeOperation =
-    a.tool === "eraser" ? "destination-out" : "source-over";
-  ctx.strokeStyle = a.color;
-  ctx.lineWidth = a.tool === "eraser" ? 24 : 2;
-  ctx.lineCap = "round";
-
-  a.points.forEach((p, i) => {
-    const x = p.x * canvas.width;
-    const y = p.y * canvas.height;
-    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    row.append(label, keyInput, modeSelect);
+    settingsList.appendChild(row);
   });
 
-  ctx.stroke();
-  ctx.globalCompositeOperation = "source-over";
-}
+  settingsModal.style.display = "flex";
+};
+
+closeSettings.onclick = () => {
+  settingsModal.style.display = "none";
+};
+
+// ---------- INIT ----------
+toolbar.style.display = "flex";
+renderPalette();
