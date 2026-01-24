@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live PDF Draw</title>
+  <title>Live PDF Viewer</title>
 
   <style>
     body {
       margin: 0;
       background: #111;
       color: #eee;
-      font-family: Arial, sans-serif;
       font-family: Arial, sans-serif;
     }
 
@@ -28,33 +27,23 @@
       padding: 20px;
     }
 
-    .page {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
     canvas {
       display: block;
-      margin: 0 auto;
-    }
-
-    .draw-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
+      margin: 0 auto 20px auto;
+      background: #222;
+      border: 1px solid #444;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h2>📄 Live PDF Draw</h2>
+    <h3>📄 Live PDF Viewer</h3>
     <input type="file" id="pdfUpload" accept="application/pdf" />
   </header>
 
   <div id="viewer"></div>
 
-  <!-- ONE module, everything imported cleanly -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>
