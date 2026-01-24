@@ -1,22 +1,170 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Host</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Host</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    color: #eee;
+    font-family: system-ui, sans-serif;
+    text-align: center;
+  }
+
+  header {
+    padding: 12px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+  }
+
+  input {
+    color: #fff;
+  }
+
+  #wrap {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .accent {
+    color: #b00b55;
+  }
+</style>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
+    authDomain: "teampdf-7ec12.firebaseapp.com",
+    projectId: "teampdf-7ec12",
+    storageBucket: "teampdf-7ec12.firebasestorage.app",
+    messagingSenderId: "307072046237",
+    appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+  signInAnonymously(getAuth(app));
+
+  const roomCode = new URLSearchParams(location.search).get("room");
+
+  const pdfCanvas = document.getElementById("pdfCanvas");
+  const drawCanvas = document.getElementById("drawCanvas");
+  const pdfCtx = pdfCanvas.getContext("2d");
+  const ctx = drawCanvas.getContext("2d");
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#b00b55";
+  ctx.lineWidth = 3;
+
+  let drawing = false;
+  let points = [];
+  let sendQueue = [];
+
+  await setDoc(doc(db, "rooms", roomCode), { createdAt: Date.now() });
+
+  pdfInput.onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const refPdf = ref(storage, `pdfs/${roomCode}.pdf`);
+    await uploadBytes(refPdf, file);
+    const url = await getDownloadURL(refPdf);
+
+    await updateDoc(doc(db, "rooms", roomCode), { pdfUrl: url });
+    renderPDF(url);
+  };
+
+  async function renderPDF(url) {
+    const pdf = await pdfjsLib.getDocument(url).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({ scale: 1.5 });
+
+    pdfCanvas.width = drawCanvas.width = vp.width;
+    pdfCanvas.height = drawCanvas.height = vp.height;
+
+    await page.render({ canvasContext: pdfCtx, viewport: vp }).promise;
+  }
+
+  drawCanvas.onmousedown = e => {
+    drawing = true;
+    points = [{ x: e.offsetX, y: e.offsetY }];
+  };
+
+  drawCanvas.onmouseup = () => {
+    drawing = false;
+    flushQueue();
+  };
+
+  drawCanvas.onmousemove = e => {
+    if (!drawing) return;
+    points.push({ x: e.offsetX, y: e.offsetY });
+    drawSmooth();
+  };
+
+  function drawSmooth() {
+    if (points.length < 2) return;
+
+    const p1 = points[points.length - 2];
+    const p2 = points[points.length - 1];
+    const mid = { x: (p1.x + p2.x)/2, y: (p1.y + p2.y)/2 };
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.quadraticCurveTo(p1.x, p1.y, mid.x, mid.y);
+    ctx.stroke();
+
+    sendQueue.push({ p1, p2 });
+  }
+
+  async function flushQueue() {
+    for (const s of sendQueue) {
+      await addDoc(collection(db, "rooms", roomCode, "strokes"), {
+        x0: s.p1.x,
+        y0: s.p1.y,
+        x1: s.p2.x,
+        y1: s.p2.y,
+        color: "#b00b55",
+        width: 3,
+        timestamp: Date.now()
+      });
+    }
+    sendQueue = [];
+  }
+</script>
 </head>
+
 <body>
-  <h2>Host</h2>
+  <header>
+    <span class="accent">Host</span> — Room <b id="room"></b>
+    <input type="file" id="pdfInput" accept="application/pdf">
+  </header>
 
-  <input type="file" id="pdfInput" accept="application/pdf" />
-
-  <div id="canvasContainer">
+  <div id="wrap">
     <canvas id="pdfCanvas"></canvas>
     <canvas id="drawCanvas"></canvas>
   </div>
 
-  <script type="module" src="host.js"></script>
+  <script>
+    document.getElementById("room").textContent =
+      new URLSearchParams(location.search).get("room");
+  </script>
 </body>
 </html>
