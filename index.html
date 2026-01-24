@@ -386,7 +386,7 @@ async function renderPDF(url){
     w.append(pc,dc);
     viewer.appendChild(w);
     await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
-    enableDrawing(dc,i);
+    if (isHost) enableDrawing(dc, i);
   }
 }
 
