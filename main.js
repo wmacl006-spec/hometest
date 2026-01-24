@@ -27,8 +27,6 @@ const storage = getStorage(app);
 
 /* ---------- DOM ---------- */
 const viewer = document.getElementById("viewer");
-const lobbyUI = document.getElementById("lobbyUI");
-const roomLabel = document.getElementById("roomLabel");
 const uploadBtn = document.getElementById("uploadBtn");
 const pdfUpload = document.getElementById("pdfUpload");
 const leaveBtn = document.getElementById("leaveRoom");
@@ -52,29 +50,6 @@ const drawState = {
   color: "#b00b55"
 };
 
-/* ---------- UI ---------- */
-function enterRoom() {
-  lobbyUI.classList.add("hidden");
-  roomLabel.classList.remove("hidden");
-  leaveBtn.classList.remove("hidden");
-  if (isTeacher) {
-    uploadBtn.classList.remove("hidden");
-    toolbar.style.display = "flex";
-  }
-}
-
-function leaveRoom() {
-  roomId = null;
-  pdfDoc = null;
-  annotationsLoaded = false;
-  viewer.innerHTML = "";
-  lobbyUI.classList.remove("hidden");
-  roomLabel.classList.add("hidden");
-  leaveBtn.classList.add("hidden");
-  uploadBtn.classList.add("hidden");
-  toolbar.style.display = "none";
-}
-
 /* ---------- Tools ---------- */
 penBtn.onclick = () => {
   drawState.tool = "pen";
@@ -92,22 +67,19 @@ eraserBtn.onclick = () => {
 
 colorPicker.oninput = e => drawState.color = e.target.value;
 
-/* ---------- Room ---------- */
+/* ---------- Rooms ---------- */
 document.getElementById("createRoom").onclick = async () => {
   roomId = crypto.randomUUID().slice(0, 6);
   isTeacher = true;
   await setDoc(doc(db, "rooms", roomId), { createdAt: Date.now() });
-  roomLabel.textContent = `Room ${roomId}`;
-  enterRoom();
+  uploadBtn.classList.remove("hidden");
+  leaveBtn.classList.remove("hidden");
+  toolbar.style.display = "flex";
 };
 
 document.getElementById("joinRoom").onclick = async () => {
   roomId = document.getElementById("roomInput").value.trim();
   if (!roomId) return;
-
-  isTeacher = false;
-  roomLabel.textContent = `Room ${roomId}`;
-  enterRoom();
 
   const snap = await getDoc(doc(db, "rooms", roomId));
   if (snap.exists() && snap.data().pdfUrl) {
@@ -115,10 +87,11 @@ document.getElementById("joinRoom").onclick = async () => {
     await loadHistory();
   }
 
+  leaveBtn.classList.remove("hidden");
   listenAnnotations();
 };
 
-leaveBtn.onclick = leaveRoom;
+leaveBtn.onclick = () => location.reload();
 
 /* ---------- Upload ---------- */
 uploadBtn.onclick = () => pdfUpload.click();
@@ -184,15 +157,6 @@ function setupDrawing(local, remote, page) {
     };
   };
 
-  local.onmousedown = e => {
-    drawing = true;
-    points = [];
-    const p = pos(e);
-    points.push(p);
-    lctx.beginPath();
-    lctx.moveTo(p.x * local.width, p.y * local.height);
-  };
-
   local.onmousemove = e => {
     if (drawState.tool === "eraser") {
       eraserCursor.style.left = `${e.clientX}px`;
@@ -215,13 +179,25 @@ function setupDrawing(local, remote, page) {
     lctx.stroke();
   };
 
+  local.onmousedown = e => {
+    drawing = true;
+    points = [];
+    const p = pos(e);
+    points.push(p);
+    lctx.beginPath();
+    lctx.moveTo(p.x * local.width, p.y * local.height);
+  };
+
   local.onmouseup = async () => {
     drawing = false;
     lctx.globalCompositeOperation = "source-over";
 
     if (points.length < 2) return;
 
-    // commit locally
+    // commit to remote canvas (IMPORTANT: set composite again)
+    rctx.globalCompositeOperation =
+      drawState.tool === "eraser" ? "destination-out" : "source-over";
+
     rctx.beginPath();
     rctx.strokeStyle = drawState.color;
     rctx.lineWidth = drawState.tool === "eraser" ? 24 : 2;
@@ -233,7 +209,9 @@ function setupDrawing(local, remote, page) {
       const y = p.y * remote.height;
       i ? rctx.lineTo(x, y) : rctx.moveTo(x, y);
     });
+
     rctx.stroke();
+    rctx.globalCompositeOperation = "source-over";
 
     lctx.clearRect(0, 0, local.width, local.height);
 
@@ -275,13 +253,14 @@ function listenAnnotations() {
 function drawRemote(a) {
   const pageDiv = viewer.children[a.page - 1];
   if (!pageDiv) return;
+
   const canvas = pageDiv.children[1];
   const ctx = canvas.getContext("2d");
 
-  ctx.beginPath();
   ctx.globalCompositeOperation =
     a.tool === "eraser" ? "destination-out" : "source-over";
 
+  ctx.beginPath();
   ctx.strokeStyle = a.color;
   ctx.lineWidth = a.tool === "eraser" ? 24 : 2;
   ctx.lineCap = "round";
