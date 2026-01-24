@@ -1,4 +1,11 @@
-// Firebase imports
+// --- PDF.js access (IMPORTANT FIX) ---
+const pdfjsLib = window.pdfjsLib;
+
+// Set worker
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+
+// --- Firebase imports (ES modules) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -13,7 +20,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// Firebase config (yours)
+// --- Firebase config (yours) ---
 const firebaseConfig = {
   apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain: "teampdf-7ec12.firebaseapp.com",
@@ -23,28 +30,28 @@ const firebaseConfig = {
   appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
 };
 
-// Init Firebase
+// --- Init Firebase ---
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// PDF.js setup
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
-
+// --- PDF state ---
 let pdfDoc = null;
 
-// Upload handler
+// --- Upload PDF ---
 document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  const storageRef = ref(storage, "pdfs/shared.pdf");
+  console.log("Uploading PDF…");
 
+  const storageRef = ref(storage, "pdfs/shared.pdf");
   await uploadBytes(storageRef, file);
+
   const url = await getDownloadURL(storageRef);
 
-  // Broadcast to all clients
+  console.log("Upload complete, broadcasting");
+
   await setDoc(doc(db, "session", "current"), {
     pdfUrl: url,
     page: 1,
@@ -52,18 +59,20 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   });
 });
 
-// Listen for live updates
+// --- Listen for live updates ---
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
 
   const { pdfUrl, page } = snap.data();
+  console.log("PDF update received");
+
   await loadPDF(pdfUrl, page);
 });
 
-// Load + render PDF
+// --- Load + render ---
 async function loadPDF(url, pageNumber) {
   pdfDoc = await pdfjsLib.getDocument(url).promise;
-  renderPage(pageNumber);
+  await renderPage(pageNumber);
 }
 
 async function renderPage(pageNumber) {
