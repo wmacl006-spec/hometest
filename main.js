@@ -45,7 +45,6 @@ const roomLabel = document.getElementById("roomLabel");
 let pdfDoc = null;
 let roomId = null;
 let isTeacher = false;
-let isRemoteScroll = false;
 
 // ---------- Create Room ----------
 document.getElementById("createRoom").onclick = async () => {
@@ -53,7 +52,6 @@ document.getElementById("createRoom").onclick = async () => {
   isTeacher = true;
 
   await setDoc(doc(db, "rooms", roomId), {
-    scrollTop: 0,
     createdAt: Date.now()
   });
 
@@ -72,6 +70,7 @@ document.getElementById("joinRoom").onclick = async () => {
 
   const roomRef = doc(db, "rooms", roomId);
   const snap = await getDoc(roomRef);
+
   if (snap.exists() && snap.data().pdfUrl) {
     await loadPDF(snap.data().pdfUrl);
   }
@@ -80,7 +79,16 @@ document.getElementById("joinRoom").onclick = async () => {
   listenAnnotations();
 };
 
-// ---------- Upload PDF (Teacher only) ----------
+// ---------- Leave ----------
+document.getElementById("leaveRoom").onclick = () => {
+  roomId = null;
+  pdfDoc = null;
+  viewer.innerHTML = "";
+  roomLabel.textContent = "";
+  pdfUpload.style.display = "none";
+};
+
+// ---------- Upload PDF ----------
 pdfUpload.onchange = async (e) => {
   const file = e.target.files[0];
   if (!file || !roomId) return;
@@ -89,51 +97,31 @@ pdfUpload.onchange = async (e) => {
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
 
-  const roomRef = doc(db, "rooms", roomId);
-  await updateDoc(roomRef, { pdfUrl: url });
+  await updateDoc(doc(db, "rooms", roomId), {
+    pdfUrl: url
+  });
 
   await loadPDF(url);
-  listenRoom(roomRef);
+  listenRoom(doc(db, "rooms", roomId));
   listenAnnotations();
 };
 
-// ---------- Room Sync ----------
+// ---------- Room Listener ----------
 function listenRoom(roomRef) {
   onSnapshot(roomRef, (snap) => {
     const data = snap.data();
-    if (!data) return;
-
-    if (!pdfDoc && data.pdfUrl) {
-      loadPDF(data.pdfUrl);
-    }
-
-    if (!isTeacher && !isRemoteScroll) {
-      isRemoteScroll = true;
-      viewer.scrollTop = data.scrollTop || 0;
-      setTimeout(() => (isRemoteScroll = false), 50);
-    }
+    if (!data || !data.pdfUrl || pdfDoc) return;
+    loadPDF(data.pdfUrl);
   });
 }
 
-// ---------- Scroll broadcast ----------
-viewer.addEventListener("scroll", async () => {
-  if (!isTeacher || isRemoteScroll || !roomId) return;
-
-  await updateDoc(doc(db, "rooms", roomId), {
-    scrollTop: viewer.scrollTop
-  });
-});
-
-// ---------- Render PDF ----------
+// ---------- Load PDF ----------
 async function loadPDF(url) {
   viewer.innerHTML = "";
   pdfDoc = null;
 
-  // 👇 Fetch the PDF manually
   const response = await fetch(url);
   const buffer = await response.arrayBuffer();
-
-  // 👇 Give PDF.js raw bytes
   pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -167,18 +155,20 @@ async function loadPDF(url) {
   }
 }
 
-// ---------- Drawing (Teacher only) ----------
+// ---------- Drawing ----------
 function setupDrawing(canvas, pageNumber) {
   if (!isTeacher) return;
 
   canvas.style.pointerEvents = "auto";
   const ctx = canvas.getContext("2d");
+
   let drawing = false;
   let points = [];
 
-  canvas.onmousedown = (e) => {
+  canvas.onmousedown = () => {
     drawing = true;
     points = [];
+    ctx.beginPath();
   };
 
   canvas.onmousemove = (e) => {
@@ -186,10 +176,10 @@ function setupDrawing(canvas, pageNumber) {
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) / canvas.width;
     const y = (e.clientY - rect.top) / canvas.height;
-    points.push({ x, y });
 
-    ctx.strokeStyle = "red";
+    points.push({ x, y });
     ctx.lineWidth = 2;
+    ctx.strokeStyle = "red";
     ctx.lineTo(x * canvas.width, y * canvas.height);
     ctx.stroke();
   };
@@ -208,9 +198,9 @@ function setupDrawing(canvas, pageNumber) {
 
 // ---------- Annotation Sync ----------
 function listenAnnotations() {
-  const colRef = collection(db, "rooms", roomId, "annotations");
+  if (!roomId) return;
 
-  onSnapshot(colRef, (snap) => {
+  onSnapshot(collection(db, "rooms", roomId, "annotations"), (snap) => {
     snap.docChanges().forEach((change) => {
       if (change.type === "added") {
         drawAnnotation(change.doc.data());
@@ -226,9 +216,9 @@ function drawAnnotation(a) {
   const canvas = pageDiv.querySelector(".overlay");
   const ctx = canvas.getContext("2d");
 
+  ctx.beginPath();
   ctx.strokeStyle = a.color;
   ctx.lineWidth = 2;
-  ctx.beginPath();
 
   a.points.forEach((p, i) => {
     const x = p.x * canvas.width;
@@ -239,3 +229,37 @@ function drawAnnotation(a) {
 
   ctx.stroke();
 }
+
+// ---------- Download Annotated PDF ----------
+document.getElementById("downloadPdf").onclick = () => {
+  if (!pdfDoc) return;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  [...viewer.children].forEach((pageDiv, i) => {
+    const base = pageDiv.querySelector("canvas");
+    const overlay = pageDiv.querySelector(".overlay");
+
+    const temp = document.createElement("canvas");
+    temp.width = base.width;
+    temp.height = base.height;
+
+    const ctx = temp.getContext("2d");
+    ctx.drawImage(base, 0, 0);
+    ctx.drawImage(overlay, 0, 0);
+
+    const img = temp.toDataURL("image/jpeg", 1.0);
+    if (i > 0) pdf.addPage();
+    pdf.addImage(
+      img,
+      "JPEG",
+      0,
+      0,
+      pdf.internal.pageSize.getWidth(),
+      pdf.internal.pageSize.getHeight()
+    );
+  });
+
+  pdf.save("annotated.pdf");
+};
