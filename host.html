@@ -43,11 +43,18 @@ main {
 
 .page {
   position: relative;
+  margin: 0 auto;
   box-shadow: 0 10px 40px rgba(0,0,0,.6);
 }
 
-canvas {
+.page canvas {
   display: block;
+}
+
+.draw {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>
 </head>
@@ -113,6 +120,7 @@ async function renderPDF(url) {
 
     const pdfCanvas = document.createElement("canvas");
     const drawCanvas = document.createElement("canvas");
+    drawCanvas.className = "draw";
 
     pdfCanvas.width = drawCanvas.width = vp.width;
     pdfCanvas.height = drawCanvas.height = vp.height;
@@ -130,7 +138,7 @@ async function renderPDF(url) {
   }
 }
 
-function setupDrawing(canvas, pageNumber) {
+function setupDrawing(canvas, page) {
   const ctx = canvas.getContext("2d");
   ctx.lineCap = ctx.lineJoin = "round";
 
@@ -154,7 +162,7 @@ function setupDrawing(canvas, pageNumber) {
     drawing = false;
 
     const stroke = {
-      page: pageNumber,
+      page,
       points: active,
       color: "#b00b55",
       width: 3,
@@ -170,15 +178,16 @@ function setupDrawing(canvas, pageNumber) {
 
   function redraw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    [...strokes, active.length ? {points:active,color:"#b00b55",width:3} : null]
-      .filter(Boolean)
-      .forEach(s => {
-        ctx.strokeStyle = s.color;
-        ctx.lineWidth = s.width;
-        ctx.beginPath();
-        s.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
-        ctx.stroke();
-      });
+    strokes.forEach(draw);
+    if (active.length) draw({ points: active, color:"#b00b55", width:3 });
+  }
+
+  function draw(s) {
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.width;
+    ctx.beginPath();
+    s.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    ctx.stroke();
   }
 }
 </script>
