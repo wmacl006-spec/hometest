@@ -50,6 +50,11 @@
       box-shadow: 0 10px 25px rgba(176,11,85,.35);
     }
 
+    .host-only {
+  display: none;
+}
+
+
     button:hover { transform: translateY(-1px); }
     button:active { transform: translateY(0); opacity: .9; }
 
@@ -165,11 +170,12 @@
       <strong>Room</strong> <span class="room-code" id="roomLabel"></span>
     </div>
     <div class="right">
-      <label class="file-label" for="pdfUpload">Upload PDF</label>
-      <input type="file" id="pdfUpload" accept="application/pdf" />
-      <button class="icon-btn" onclick="downloadAnnotatedPDF()">⬇ PDF</button>
-      <button class="secondary" onclick="leaveRoom()">Leave</button>
-    </div>
+  <label class="file-label host-only" for="pdfUpload">Upload PDF</label>
+  <input type="file" id="pdfUpload" accept="application/pdf" />
+  <button class="icon-btn host-only" onclick="downloadAnnotatedPDF()">⬇ PDF</button>
+  <button class="secondary" onclick="leaveRoom()">Leave</button>
+</div>
+
   </header>
 
   <div id="viewer"></div>
@@ -215,24 +221,42 @@
   window.leaveRoom = () => location.reload();
 
   async function startSession() {
-    document.getElementById('home').style.display = 'none';
-    document.getElementById('workspace').style.display = 'block';
-    document.getElementById('roomLabel').innerText = roomCode;
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('workspace').style.display = 'block';
+  document.getElementById('roomLabel').innerText = roomCode;
 
-    const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
-    const drawRef = ref(db, `rooms/${roomCode}/draw`);
+  // SHOW host-only controls
+  if (isHost) {
+    document.querySelectorAll('.host-only').forEach(el => {
+      el.style.display = 'inline-flex';
+    });
+  }
 
-    if (isHost) {
-      document.getElementById('pdfUpload').onchange = async e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
-        await uploadBytes(fileRef, file);
-        pdfUrl = await getDownloadURL(fileRef);
-        await set(pdfRef, pdfUrl);
-        renderPDF(pdfUrl);
-      };
-    }
+  const pdfRef = ref(db, `rooms/${roomCode}/pdf`);
+  const drawRef = ref(db, `rooms/${roomCode}/draw`);
+
+  if (isHost) {
+    document.getElementById('pdfUpload').onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fileRef = sRef(storage, `pdfs/${roomCode}.pdf`);
+      await uploadBytes(fileRef, file);
+      pdfUrl = await getDownloadURL(fileRef);
+      await set(pdfRef, pdfUrl);
+      renderPDF(pdfUrl);
+    };
+  }
+
+  const snap = await get(pdfRef);
+  if (snap.exists()) {
+    pdfUrl = snap.val();
+    await renderPDF(pdfUrl);
+  }
+
+  onChildAdded(drawRef, snap => drawStroke(snap.val()));
+}
+
 
     const snap = await get(pdfRef);
     if (snap.exists()) {
