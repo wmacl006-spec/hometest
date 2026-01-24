@@ -333,15 +333,14 @@ downloadBtn.onclick = async () => {
   if (!pdfDoc) return;
 
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: "px" });
-
   const pages = viewer.querySelectorAll(".page");
+
+  let pdf = null;
 
   for (let i = 0; i < pages.length; i++) {
     const base = pages[i].children[0];
     const overlay = pages[i].children[1];
 
-    // Merge canvases
     const merged = document.createElement("canvas");
     merged.width = base.width;
     merged.height = base.height;
@@ -352,7 +351,16 @@ downloadBtn.onclick = async () => {
 
     const img = merged.toDataURL("image/png");
 
-    if (i > 0) pdf.addPage([merged.width, merged.height]);
+    if (i === 0) {
+      // CRITICAL: set page size to match canvas
+      pdf = new jsPDF({
+        unit: "px",
+        format: [merged.width, merged.height]
+      });
+    } else {
+      pdf.addPage([merged.width, merged.height]);
+    }
+
     pdf.addImage(img, "PNG", 0, 0, merged.width, merged.height);
   }
 
