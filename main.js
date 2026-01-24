@@ -1,10 +1,11 @@
 // ============================
 // Firebase Setup
 // ============================
-import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
+import * as pdfjsLib from "https://mozilla.github.io/pdf.js/build/pdf.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
+  "https://mozilla.github.io/pdf.js/build/pdf.worker.mjs";
+
 
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
