@@ -279,6 +279,7 @@ input#joinInput:focus {
         </label>
       </div>
       <button onclick="downloadAnnotatedPDF()">⬇ PDF</button>
+      <button id="leaveBtn">Leave</button>
     </div>
   </header>
 
@@ -567,6 +568,26 @@ window.downloadAnnotatedPDF = async () => {
   URL.revokeObjectURL(url);
 };
 
+function leaveRoom() {
+  // Reset state
+  roomCode = null;
+  isHost = false;
+  pdfUrl = null;
+  viewer.innerHTML = "";
+
+  // Hide workspace, show home
+  workspace.style.display = "none";
+  home.style.display = "flex";
+
+  // Show upload toolbar and toolbar for next host
+  uploadControls.style.display = "flex";
+  toolbar.style.display = "flex";
+}
+
+  document.getElementById("leaveBtn").onclick = leaveRoom;
+
+
+  
 </script>
 
   <div id="settingsModal" class="modal hidden">
