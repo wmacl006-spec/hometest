@@ -1,11 +1,10 @@
-// --- PDF.js access (IMPORTANT FIX) ---
-const pdfjsLib = window.pdfjsLib;
+// ---------------- PDF.js (MODULE IMPORT — FIX) ----------------
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
 
-// Set worker
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
 
-// --- Firebase imports (ES modules) ---
+// ---------------- Firebase ----------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -20,7 +19,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// --- Firebase config (yours) ---
+// ---------------- Firebase config ----------------
 const firebaseConfig = {
   apiKey: "AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain: "teampdf-7ec12.firebaseapp.com",
@@ -30,15 +29,15 @@ const firebaseConfig = {
   appId: "1:307072046237:web:d1f44f115fdf199b5a7074"
 };
 
-// --- Init Firebase ---
+// ---------------- Init Firebase ----------------
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- PDF state ---
+// ---------------- PDF state ----------------
 let pdfDoc = null;
 
-// --- Upload PDF ---
+// ---------------- Upload handler ----------------
 document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -59,7 +58,7 @@ document.getElementById("pdfUpload").addEventListener("change", async (e) => {
   });
 });
 
-// --- Listen for live updates ---
+// ---------------- Live listener ----------------
 onSnapshot(doc(db, "session", "current"), async (snap) => {
   if (!snap.exists()) return;
 
@@ -69,7 +68,7 @@ onSnapshot(doc(db, "session", "current"), async (snap) => {
   await loadPDF(pdfUrl, page);
 });
 
-// --- Load + render ---
+// ---------------- Render ----------------
 async function loadPDF(url, pageNumber) {
   pdfDoc = await pdfjsLib.getDocument(url).promise;
   await renderPage(pageNumber);
