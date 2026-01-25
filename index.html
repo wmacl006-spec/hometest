@@ -460,6 +460,9 @@ function applyZoom() {
     // Update wrapper height so layout matches visual size
     page.style.height = (pdfCanvas.height * zoom) + "px";
     page.style.width = (pdfCanvas.width * zoom) + "px";
+
+    page.style.marginTop = `${32 * zoom}px`;
+
   });
 
   // Adjust spacing between pages
