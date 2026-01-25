@@ -434,7 +434,9 @@ const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.9;
 const ZOOM_MAX = 3;
 
+let ratio = window.devicePixelRatio || 2;
 
+  
 let roomCode, isHost=false, pdfUrl;
 let tool="pen";
 let activeProfile=0;
@@ -626,7 +628,6 @@ async function renderPDF(url){
     dc.className="draw-layer";
 
 // High‑resolution drawing canvas
-const ratio = window.devicePixelRatio || 2;  // 2x or 3x resolution
 
 dc.width = v.width * ratio;
 dc.height = v.height * ratio;
