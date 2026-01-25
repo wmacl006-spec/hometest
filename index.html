@@ -655,8 +655,8 @@ function enableDrawing(c, page) {
   c.onmousedown = e => {
     d = true;
     const b = c.getBoundingClientRect();
-    lx = (e.clientX - b.left) / zoom;
-ly = (e.clientY - b.top) / zoom;
+    lx = ((e.clientX - b.left) / zoom) * ratio;
+ly = ((e.clientY - b.top) / zoom) * ratio;
 
 
     // ✅ THIS is your pasted code — correct
@@ -680,9 +680,9 @@ ly = (e.clientY - b.top) / zoom;
     if (!d) return;
 
     const b = c.getBoundingClientRect();
-    const x = (e.clientX - b.left) / zoom * ratio;
+    const x = ((e.clientX - b.left) / zoom) * ratio;
+const y = ((e.clientY - b.top) / zoom) * ratio;
 
-const y = (e.clientY - b.top) / zoom;
 
 
     push(r, {
