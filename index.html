@@ -447,12 +447,22 @@ if (modal) {
 
 function applyZoom() {
   document.querySelectorAll(".page").forEach(page => {
-    page.style.transformOrigin = "top center";
-    page.style.transform = `scale(${zoom})`;
+    const pdfCanvas = page.querySelector(".pdf-layer");
+    const drawCanvas = page.querySelector(".draw-layer");
+
+    // Scale the canvases visually
+    pdfCanvas.style.transformOrigin = "top left";
+    drawCanvas.style.transformOrigin = "top left";
+
+    pdfCanvas.style.transform = `scale(${zoom})`;
+    drawCanvas.style.transform = `scale(${zoom})`;
+
+    // Update wrapper height so layout matches visual size
+    page.style.height = (pdfCanvas.height * zoom) + "px";
+    page.style.width = (pdfCanvas.width * zoom) + "px";
   });
 
   // Adjust spacing between pages
-  const viewer = document.getElementById("viewer");
   viewer.style.gap = `${32 * zoom}px`;
 }
 
