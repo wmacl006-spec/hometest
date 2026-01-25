@@ -596,7 +596,10 @@ function drawStroke(s){
   const ctx=c.getContext("2d");
   ctx.save();
   ctx.lineCap="round";
-  ctx.lineWidth=s.size;
+  ctx.lineJoin = "round";
+
+ctx.lineWidth = s.size * SCALE;
+  
   if(s.erase){
     ctx.globalCompositeOperation="destination-out";
     ctx.strokeStyle="rgba(0,0,0,1)";
@@ -616,15 +619,33 @@ async function renderPDF(url){
   const pdf=await pdfjsLib.getDocument(url).promise;
   for(let i=1;i<=pdf.numPages;i++){
     const p=await pdf.getPage(i);
-    const v=p.getViewport({scale:1.4});
+
+const PDF_SCALE = 2.0; // or 2.5 for very crisp pages
+const v = p.getViewport({ scale: PDF_SCALE });
+
+    
     const w=document.createElement("div");
     w.className="page";
     const pc=document.createElement("canvas");
     const dc=document.createElement("canvas");
     pc.className="pdf-layer";
     dc.className="draw-layer";
-    pc.width=dc.width=v.width;
-    pc.height=dc.height=v.height;
+    
+const SCALE = 2; // 2x resolution
+
+pc.width = v.width * SCALE;
+pc.height = v.height * SCALE;
+
+dc.width = v.width * SCALE;
+dc.height = v.height * SCALE;
+
+pc.style.width = v.width + "px";
+pc.style.height = v.height + "px";
+
+dc.style.width = v.width + "px";
+dc.style.height = v.height + "px";
+
+    
     dc.id=`draw-${i}`;
     w.append(pc,dc);
     viewer.appendChild(w);
@@ -640,8 +661,10 @@ function enableDrawing(c, page) {
   c.onmousedown = e => {
     d = true;
     const b = c.getBoundingClientRect();
-    lx = (e.clientX - b.left) / zoom;
-ly = (e.clientY - b.top) / zoom;
+    
+
+    lx = ((e.clientX - b.left) / zoom) * SCALE;
+ly = ((e.clientY - b.top) / zoom) * SCALE;
 
 
     // ✅ THIS is your pasted code — correct
@@ -665,8 +688,9 @@ ly = (e.clientY - b.top) / zoom;
     if (!d) return;
 
     const b = c.getBoundingClientRect();
-    const x = (e.clientX - b.left) / zoom;
-const y = (e.clientY - b.top) / zoom;
+    const x = ((e.clientX - b.left) / zoom) * SCALE;
+const y = ((e.clientY - b.top) / zoom) * SCALE;
+
 
 
     push(r, {
