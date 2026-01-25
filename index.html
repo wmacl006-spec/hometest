@@ -530,7 +530,8 @@ document.addEventListener("mousemove", e => {
 });
 
 function updateEraserCursor() {
-  const size = brushSize * zoom;
+  const size = brushSize * zoom * ratio;
+
   eraserCursor.style.width = size + "px";
   eraserCursor.style.height = size + "px";
 }
@@ -623,6 +624,20 @@ async function renderPDF(url){
     const dc=document.createElement("canvas");
     pc.className="pdf-layer";
     dc.className="draw-layer";
+
+// High‑resolution drawing canvas
+const ratio = window.devicePixelRatio || 2;  // 2x or 3x resolution
+
+dc.width = v.width * ratio;
+dc.height = v.height * ratio;
+
+dc.style.width = v.width + "px";
+dc.style.height = v.height + "px";
+
+const ctx = dc.getContext("2d");
+ctx.scale(ratio, ratio);
+
+    
     pc.width=dc.width=v.width;
     pc.height=dc.height=v.height;
     dc.id=`draw-${i}`;
@@ -665,7 +680,8 @@ ly = (e.clientY - b.top) / zoom;
     if (!d) return;
 
     const b = c.getBoundingClientRect();
-    const x = (e.clientX - b.left) / zoom;
+    const x = (e.clientX - b.left) / zoom * ratio;
+
 const y = (e.clientY - b.top) / zoom;
 
 
@@ -747,6 +763,7 @@ window.downloadAnnotatedPDF = async () => {
     if (!canvas) continue;
 
     const pngDataUrl = canvas.toDataURL("image/png");
+
     const pngImage = await doc.embedPng(pngDataUrl);
 
     const { width, height } = page.getSize();
