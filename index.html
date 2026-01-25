@@ -450,7 +450,12 @@ function applyZoom() {
     page.style.transformOrigin = "top center";
     page.style.transform = `scale(${zoom})`;
   });
+
+  // Adjust spacing between pages
+  const viewer = document.getElementById("viewer");
+  viewer.style.gap = `${32 * zoom}px`;
 }
+
 
   zoomInBtn.onclick = () => {
   zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
