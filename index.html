@@ -586,7 +586,12 @@ function drawStroke(s){
   const ctx=c.getContext("2d");
   ctx.save();
   ctx.lineCap="round";
-  ctx.lineWidth=s.size;
+
+const w = c.width;
+const h = c.height;
+
+ctx.lineWidth = s.size * w;
+  
   if(s.erase){
     ctx.globalCompositeOperation="destination-out";
     ctx.strokeStyle="rgba(0,0,0,1)";
@@ -595,8 +600,10 @@ function drawStroke(s){
     ctx.strokeStyle=s.color;
   }
   ctx.beginPath();
-  ctx.moveTo(s.x1,s.y1);
-  ctx.lineTo(s.x2,s.y2);
+
+ctx.moveTo(s.x1 * w, s.y1 * h);
+ctx.lineTo(s.x2 * w, s.y2 * h);
+  
   ctx.stroke();
   ctx.restore();
 }
@@ -638,15 +645,21 @@ function enableDrawing(c, page) {
 
     // ✅ THIS is your pasted code — correct
     push(r, {
-      page,
-      x1: lx,
-      y1: ly,
-      x2: lx,
-      y2: ly,
-      color: profiles[activeProfile],
-      erase: tool === "eraser",
-      size: brushSize
-    });
+  page,
+
+  // normalized (0–1)
+  x1: lx / c.width,
+  y1: ly / c.height,
+  x2: x / c.width,
+  y2: y / c.height,
+
+  color: profiles[activeProfile],
+  erase: tool === "eraser",
+
+  // also normalize size
+  size: brushSize / c.width
+});
+
   };
 
   c.onmouseup = c.onmouseleave = () => {
