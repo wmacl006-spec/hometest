@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TeamPDF</title>
+<title>PDFlive</title>
 
+<link rel="icon" href="logo.png" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -20,7 +21,6 @@
   --border:#262633;
   --text:#f2f2f2;
   --shadow:0 10px 30px rgba(0,0,0,0.5);
-  --transition:0.3s ease;
 }
 
 * { box-sizing:border-box; font-family:Inter,sans-serif; }
@@ -33,317 +33,147 @@ body {
   overflow:hidden;
 }
 
-/* ---------- Layout ---------- */
-#workspace { display:none; height:100vh; }
-
-header {
-  height:64px;
-  background:var(--panel);
-  padding:12px 24px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid var(--border);
-  box-shadow: var(--shadow);
-  font-weight:500;
-}
-
-#viewer {
-  height:calc(100vh - 64px);
-  overflow-y:auto;
-  padding:24px 0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:32px;
-}
-
-/* ---------- PDF Layers (original look) ---------- */
-.page {
-  position:relative;
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
-}
-
-.pdf-layer { position:relative; z-index:1; }
-.draw-layer {
-  position:absolute;
-  inset:0;
-  z-index:2;
-}
-
-/* ---------- Toolbar ---------- */
-#toolbar {
-  display: none; /* hide for everyone initially */
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: 24px;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 999;
-  box-shadow: var(--shadow);
-}
-
-
-
-.tool-row {
-  display:flex;
-  gap:12px;
-}
-
-.tool {
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  border:2px solid var(--border);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:600;
-  transition: all var(--transition);
-}
-
-.tool:hover {
-  transform:scale(1.1);
-  border-color:var(--accent);
-}
-
-.tool.active {
-  outline:3px solid var(--accent);
-}
-
-.tool.eraser {
-  border-radius:12px;
-  background:#111;
-  color:white;
-}
-
-input[type=color] {
-  width:40px;
-  height:40px;
-  border:none;
-  cursor:pointer;
-  border-radius:50%;
-  padding:0;
-  transition: all var(--transition);
-}
-
-input[type=color]:hover { transform:scale(1.1); }
-
-input[type=range] {
-  width:160px;
-  accent-color:var(--accent);
-}
-
-/* ---------- Home ---------- */
+/* ---------- HOME ---------- */
 .center {
+  height:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  height:100%;
-  background:linear-gradient(135deg,#111,#1a1a27);
 }
 
 .card {
   background:var(--panel);
-  padding:50px 40px;
-  border-radius:24px;
-  width:380px;
+  padding:40px;
+  border-radius:20px;
+  width:360px;
   text-align:center;
   box-shadow:var(--shadow);
-  transition: transform var(--transition);
-}
-
-.card:hover { transform:translateY(-6px); }
-
-.card h1 {
-  font-size:2.5rem;
-  margin-bottom:24px;
 }
 
 button {
-  background:linear-gradient(135deg,#b00b55,#d4146a);
+  width:100%;
+  padding:14px;
+  border-radius:14px;
   border:none;
+  background:linear-gradient(135deg,#b00b55,#d4146a);
   color:white;
-  padding:14px 20px;
-  border-radius:16px;
   font-weight:600;
   cursor:pointer;
-  transition: all var(--transition);
-  font-size:1rem;
-  width:100%;
-}
-
-button:hover {
-  background:linear-gradient(135deg,#d4146a,#ff3a7a);
-  transform:translateY(-2px) scale(1.02);
-  box-shadow:0 8px 20px rgba(255,0,90,0.4);
+  margin-top:10px;
 }
 
 button.secondary {
   background:transparent;
   border:2px solid var(--accent);
   color:var(--accent);
-  font-weight:600;
-  margin-top:12px;
-  transition: all var(--transition);
 }
 
-button.secondary:hover {
-  background:var(--accent);
-  color:white;
-  transform:translateY(-2px);
-  box-shadow:0 8px 20px rgba(255,0,90,0.3);
-}
-
-input#joinInput {
+input {
   width:100%;
   padding:12px;
   border-radius:12px;
   border:1px solid var(--border);
-  margin-bottom:12px;
   background:#111;
   color:white;
-  font-weight:500;
   text-align:center;
-  transition: all var(--transition);
 }
 
-input#joinInput:focus {
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 10px rgba(255,0,90,0.5);
-}
+/* ---------- WORKSPACE ---------- */
+#workspace { display:none; height:100vh; }
 
-/* ---------- Upload/Download Buttons Side by Side ---------- */
-#workspace header > div:last-child {
+header {
+  height:64px;
+  background:var(--panel);
   display:flex;
-  gap:12px;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+}
+
+header button {
+  padding:8px 12px;
+  border-radius:10px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+
+header .right {
+  display:flex;
+  gap:10px;
   align-items:center;
 }
 
-/* Unified style for header buttons and upload label */
-#workspace header button,
-#uploadControls label {
-  background: #b00b55;       /* accent color */
-  color: white;
-  padding: 8px 14px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition);
-  text-align: center;
-  display: inline-flex;       /* ensures transform works properly */
-  align-items: center;
-  justify-content: center;
+#viewer {
+  height:calc(100vh - 64px);
+  overflow:auto;
+  padding:30px 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:30px;
 }
 
-#workspace header button:hover,
-#uploadControls label:hover {
-  background: #d4146a;       /* lighter hover */
-  transform: scale(1.05);     /* match the inflate effect */
-  box-shadow: 0 6px 20px rgba(255, 0, 90, 0.4);
+/* ---------- PDF ---------- */
+.page {
+  position:relative;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
 }
 
-  .modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
+.pdf-layer { z-index:1; }
+.draw-layer {
+  position:absolute;
+  inset:0;
+  z-index:2;
 }
-
-.modal.hidden {
-  display: none;
-}
-
-.modal-card {
-  background: var(--panel);
-  padding: 24px;
-  border-radius: 16px;
-  width: 300px;
-  box-shadow: var(--shadow);
-}
-
-.bind {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 10px 0;
-}
-
-.bind input {
-  width: 100px;
-  padding: 6px;
-  background: #111;
-  color: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  text-align: center;
-}
-
-
-
 </style>
 </head>
 
 <body>
 
-<div class="center" id="home">
+<!-- HOME -->
+<div id="home" class="center">
   <div class="card">
-    <h1>Team<span style="color:#b00b55">PDF</span></h1>
-    <button onclick="hostRoom()">Host</button><br><br>
+    <h1>PDF<span style="color:#b00b55">live</span></h1>
+    <button onclick="hostRoom()">Host</button>
     <input id="joinInput" placeholder="ROOM CODE" />
     <button class="secondary" onclick="joinRoom()">Join</button>
   </div>
 </div>
 
+<!-- WORKSPACE -->
 <div id="workspace">
   <header>
     <div>Room <strong id="roomLabel"></strong></div>
-    <div>
-      <div id="uploadControls">
-        <label style="cursor:pointer">Upload
-          <input type="file" id="pdfUpload" hidden />
-        </label>
-      </div>
+    <div class="right">
+      <label>
+        <button>Upload</button>
+        <input id="pdfUpload" type="file" hidden>
+      </label>
+
+      <button onclick="zoomOut()">−</button>
+      <button onclick="zoomIn()">+</button>
+
       <button onclick="downloadAnnotatedPDF()">⬇ PDF</button>
-      <button id="leaveBtn">Leave</button>
+      <button onclick="leaveRoom()">Leave</button>
     </div>
   </header>
 
   <div id="viewer"></div>
 </div>
 
-<!-- HOST-ONLY TOOLBAR -->
-<div id="toolbar">
-  <div class="tool-row">
-    <div class="tool color" data-index="0"></div>
-    <div class="tool color" data-index="1"></div>
-    <div class="tool color" data-index="2"></div>
-    <div class="tool eraser">[ ]</div>
-    <input type="color" id="colorPicker" />
-    <div class="tool" id="settingsBtn">⚙️</div>
-  </div>
-  <input type="range" id="sizeSlider" min="1" max="20" value="3" />
-</div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, get, set, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-const firebaseConfig = {
+/* ---------- FIREBASE ---------- */
+const app = initializeApp({
   apiKey:"AIzaSyDAScHIxTwrXQEVCnEYxizNPSRKiuYsqqA",
   authDomain:"teampdf-7ec12.firebaseapp.com",
   databaseURL:"https://teampdf-7ec12-default-rtdb.firebaseio.com",
@@ -351,321 +181,158 @@ const firebaseConfig = {
   storageBucket:"teampdf-7ec12.firebasestorage.app",
   messagingSenderId:"307072046237",
   appId:"1:307072046237:web:d1f44f115fdf199b5a7074"
-};
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
 /* ---------- STATE ---------- */
-
-
-
 let roomCode, isHost=false, pdfUrl;
-let tool="pen";
-let activeProfile=0;
-let brushSize=3;
-const profiles=["#b00b55","#00c2ff","#00ff9c"];
-
-const settingsBtn = document.getElementById("settingsBtn");
-
-const modal = document.getElementById("settingsModal");
-
-if (modal) {
-  settingsBtn.onclick = () => modal.classList.remove("hidden");
-  window.closeSettings = () => modal.classList.add("hidden");
-}
-
-
-
-  
-/* ---------- TOOLBAR ---------- */
-const toolbar=document.getElementById("toolbar");
-const colorTools=document.querySelectorAll(".tool.color");
-
-colorTools.forEach(t=>{
-  const i=+t.dataset.index;
-  t.style.background=profiles[i];
-  t.onclick=()=>{
-    tool="pen";
-    activeProfile=i;
-    updateToolbar();
-  };
-});
-
-document.querySelector(".eraser").onclick=()=>{
-  tool="eraser";
-  updateToolbar();
-};
-
-colorPicker.oninput=e=>{
-  profiles[activeProfile]=e.target.value;
-  colorTools[activeProfile].style.background=e.target.value;
-};
-
-sizeSlider.oninput=e=>{
-  brushSize=+e.target.value;
-};
-
-function updateToolbar(){
-  document.querySelectorAll(".tool").forEach(t=>t.classList.remove("active"));
-  if(tool==="pen") colorTools[activeProfile].classList.add("active");
-  if(tool==="eraser") document.querySelector(".eraser").classList.add("active");
-}
-updateToolbar();
+let scale = 1.4;
 
 /* ---------- ROOM ---------- */
-window.hostRoom=()=>{isHost=true;roomCode=Math.random().toString(36).slice(2,7).toUpperCase();start()};
-window.joinRoom=()=>{roomCode=joinInput.value.toUpperCase();if(roomCode)start()};
+window.hostRoom = () => {
+  isHost = true;
+  roomCode = Math.random().toString(36).slice(2,7).toUpperCase();
+  start();
+};
+
+window.joinRoom = () => {
+  roomCode = joinInput.value.toUpperCase();
+  if (roomCode) start();
+};
 
 async function start(){
   home.style.display="none";
   workspace.style.display="block";
-  roomLabel.textContent=roomCode;
+  roomLabel.textContent = roomCode;
+
+  const pdfRef = ref(db,`rooms/${roomCode}/pdf`);
+  const drawRef = ref(db,`rooms/${roomCode}/draw`);
 
   if(isHost){
-  toolbar.style.display = "flex";  // only host sees toolbar
-} else {
-  uploadControls.style.display = "none"; // joined users cannot upload
-  toolbar.style.display = "none";        // hide toolbar for them
-}
-
-  const pdfRef=ref(db,`rooms/${roomCode}/pdf`);
-  const drawRef=ref(db,`rooms/${roomCode}/draw`);
-
-  if(isHost){
-    pdfUpload.onchange=async e=>{
-      const f=e.target.files[0];
-      const r=sRef(storage,`pdfs/${roomCode}.pdf`);
+    pdfUpload.onchange = async e => {
+      const f = e.target.files[0];
+      const r = sRef(storage,`pdfs/${roomCode}.pdf`);
       await uploadBytes(r,f);
-      pdfUrl=await getDownloadURL(r);
+      pdfUrl = await getDownloadURL(r);
       await set(pdfRef,pdfUrl);
-      await renderPDF(pdfUrl); // render PDF first
-      drawExistingStrokes();   // then draw existing strokes
+      await renderPDF();
     };
   }
 
-  const snap=await get(pdfRef);
+  const snap = await get(pdfRef);
   if(snap.exists()){
-    pdfUrl=snap.val();
-    await renderPDF(pdfUrl);  // wait for PDF to render
-    drawExistingStrokes();    // then draw old strokes
+    pdfUrl = snap.val();
+    await renderPDF();
   }
 
-  function drawExistingStrokes(){
-    get(drawRef).then(drawSnap => {
-      if(drawSnap.exists()){
-        drawSnap.forEach(s => drawStroke(s.val()));
-      }
-    });
-  }
-
-  // Listen for new strokes in real-time
   onChildAdded(drawRef, s => drawStroke(s.val()));
-
 }
 
+/* ---------- PDF RENDER ---------- */
+async function renderPDF(){
+  viewer.innerHTML="";
+  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale });
+
+    const wrap = document.createElement("div");
+    wrap.className="page";
+
+    const pc = document.createElement("canvas");
+    const dc = document.createElement("canvas");
+    pc.width = dc.width = viewport.width;
+    pc.height = dc.height = viewport.height;
+    dc.id = `draw-${i}`;
+
+    wrap.append(pc,dc);
+    viewer.appendChild(wrap);
+
+    await page.render({
+      canvasContext: pc.getContext("2d"),
+      viewport
+    }).promise;
+
+    if(isHost) enableDrawing(dc,i);
+  }
+}
 
 /* ---------- DRAWING ---------- */
+function enableDrawing(c,page){
+  let drawing=false, lx, ly;
+  const r = ref(db,`rooms/${roomCode}/draw`);
+
+  c.onmousedown=e=>{
+    drawing=true;
+    const b=c.getBoundingClientRect();
+    lx=e.clientX-b.left;
+    ly=e.clientY-b.top;
+  };
+
+  c.onmousemove=e=>{
+    if(!drawing) return;
+    const b=c.getBoundingClientRect();
+    const x=e.clientX-b.left;
+    const y=e.clientY-b.top;
+
+    push(r,{page,x1:lx,y1:ly,x2:x,y2:y,color:"#b00b55",size:3});
+    lx=x; ly=y;
+  };
+
+  c.onmouseup = c.onmouseleave = ()=>drawing=false;
+}
+
 function drawStroke(s){
   const c=document.getElementById(`draw-${s.page}`);
   if(!c) return;
   const ctx=c.getContext("2d");
-  ctx.save();
   ctx.lineCap="round";
   ctx.lineWidth=s.size;
-  if(s.erase){
-    ctx.globalCompositeOperation="destination-out";
-    ctx.strokeStyle="rgba(0,0,0,1)";
-  } else {
-    ctx.globalCompositeOperation="source-over";
-    ctx.strokeStyle=s.color;
-  }
+  ctx.strokeStyle=s.color;
   ctx.beginPath();
   ctx.moveTo(s.x1,s.y1);
   ctx.lineTo(s.x2,s.y2);
   ctx.stroke();
-  ctx.restore();
 }
 
-async function renderPDF(url){
-  viewer.innerHTML="";
-  const pdf=await pdfjsLib.getDocument(url).promise;
-  for(let i=1;i<=pdf.numPages;i++){
-    const p=await pdf.getPage(i);
-    const v=p.getViewport({scale:1.4});
-    const w=document.createElement("div");
-    w.className="page";
-    const pc=document.createElement("canvas");
-    const dc=document.createElement("canvas");
-    pc.className="pdf-layer";
-    dc.className="draw-layer";
-    pc.width=dc.width=v.width;
-    pc.height=dc.height=v.height;
-    dc.id=`draw-${i}`;
-    w.append(pc,dc);
-    viewer.appendChild(w);
-    await p.render({canvasContext:pc.getContext("2d"),viewport:v}).promise;
-    if(isHost) enableDrawing(dc, i);
-  }
-}
-
-function enableDrawing(c,page){
-  let d=false,lx,ly;
-  const r=ref(db,`rooms/${roomCode}/draw`);
-  c.onmousedown=e=>{
-    d=true;
-    const b=c.getBoundingClientRect();
-    lx=e.clientX-b.left; ly=e.clientY-b.top;
-  };
-  c.onmouseup=c.onmouseleave=()=>d=false;
-  c.onmousemove=e=>{
-    if(!d) return;
-    const b=c.getBoundingClientRect();
-    const x=e.clientX-b.left,y=e.clientY-b.top;
-    push(r,{
-      page,
-      x1:lx,y1:ly,x2:x,y2:y,
-      color:profiles[activeProfile],
-      erase:tool==="eraser",
-      size:brushSize
-    });
-    lx=x; ly=y;
-  };
-}
-
-  /* ---------- KEYBINDS ---------- */
-const defaultBinds = {
-  color0: "1",
-  color1: "2",
-  color2: "3",
-  eraser: "e"
+/* ---------- ZOOM ---------- */
+window.zoomIn = () => {
+  scale = Math.min(scale + 0.2, 3);
+  renderPDF();
 };
 
-let keybinds = JSON.parse(localStorage.getItem("keybinds")) || defaultBinds;
-
-const inputs = modal.querySelectorAll("input");
-
-inputs.forEach(input => {
-  const key = input.dataset.bind;
-  input.value = keybinds[key];
-
-  input.onfocus = () => input.value = "Press key";
-  input.onkeydown = e => {
-    e.preventDefault();
-    keybinds[key] = e.key;
-    input.value = e.key;
-    localStorage.setItem("keybinds", JSON.stringify(keybinds));
-    input.blur();
-  };
-});
-
-settingsBtn.onclick = () => modal.classList.remove("hidden");
-window.closeSettings = () => modal.classList.add("hidden");
-
-document.addEventListener("keydown", e => {
-  if (e.target.tagName === "INPUT") return;
-
-  if (e.key === keybinds.color0) {
-    tool = "pen"; activeProfile = 0; updateToolbar();
-  }
-  if (e.key === keybinds.color1) {
-    tool = "pen"; activeProfile = 1; updateToolbar();
-  }
-  if (e.key === keybinds.color2) {
-    tool = "pen"; activeProfile = 2; updateToolbar();
-  }
-  if (e.key === keybinds.eraser) {
-    tool = "eraser"; updateToolbar();
-  }
-});
+window.zoomOut = () => {
+  scale = Math.max(scale - 0.2, 0.5);
+  renderPDF();
+};
 
 /* ---------- EXPORT ---------- */
 window.downloadAnnotatedPDF = async () => {
-  if (!pdfUrl) return;
-
-  const bytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
+  const bytes = await fetch(pdfUrl).then(r=>r.arrayBuffer());
   const doc = await PDFLib.PDFDocument.load(bytes);
-
   const pages = doc.getPages();
 
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
-    const canvas = document.getElementById(`draw-${i + 1}`);
-    if (!canvas) continue;
-
-    const pngDataUrl = canvas.toDataURL("image/png");
-    const pngImage = await doc.embedPng(pngDataUrl);
-
-    const { width, height } = page.getSize();
-
-    page.drawImage(pngImage, {
-      x: 0,
-      y: 0,
-      width,
-      height
-    });
+  for(let i=0;i<pages.length;i++){
+    const canvas = document.getElementById(`draw-${i+1}`);
+    if(!canvas) continue;
+    const png = await doc.embedPng(canvas.toDataURL());
+    const {width,height} = pages[i].getSize();
+    pages[i].drawImage(png,{x:0,y:0,width,height});
   }
 
-  const out = await doc.save();
-
-  const blob = new Blob([out], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `TeamPDF-${roomCode}.pdf`;
+  const blob = new Blob([await doc.save()],{type:"application/pdf"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`PDFlive-${roomCode}.pdf`;
   a.click();
-
-  URL.revokeObjectURL(url);
 };
 
-function leaveRoom() {
-  
-  roomCode = null;
-  isHost = false;
-  pdfUrl = null;
-
-  viewer.innerHTML = "";
-
-  workspace.style.display = "none";
-  home.style.display = "flex";
-
-  uploadControls.style.display = "flex";
-  toolbar.style.display = "none";
-}
-
-
-  document.getElementById("leaveBtn").onclick = leaveRoom;
-
-
-  
+/* ---------- LEAVE ---------- */
+window.leaveRoom = () => location.reload();
 </script>
-
-  <div id="settingsModal" class="modal hidden">
-  <div class="modal-card">
-    <h3>Keybinds</h3>
-
-    <div class="bind">
-      <span>Color 1</span>
-      <input data-bind="color0" readonly />
-    </div>
-    <div class="bind">
-      <span>Color 2</span>
-      <input data-bind="color1" readonly />
-    </div>
-    <div class="bind">
-      <span>Color 3</span>
-      <input data-bind="color2" readonly />
-    </div>
-    <div class="bind">
-      <span>Eraser</span>
-      <input data-bind="eraser" readonly />
-    </div>
-
-    <button class="secondary" onclick="closeSettings()">Close</button>
-  </div>
-</div>
 
 </body>
 </html>
