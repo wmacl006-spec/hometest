@@ -334,6 +334,12 @@ input#joinInput:focus {
   <header>
     <div>Room <strong id="roomLabel"></strong></div>
     <div>
+
+      <button id="zoomInBtn">＋</button>
+<button id="zoomOutBtn">－</button>
+<button id="zoomResetBtn">Reset</button>
+
+      
       <div id="uploadControls">
         <label style="cursor:pointer">Upload
           <input type="file" id="pdfUpload" hidden />
@@ -417,6 +423,10 @@ window.goHome = () => {
 
 /* ---------- STATE ---------- */
 
+let zoom = 1;
+const ZOOM_STEP = 0.1;
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 3;
 
 
 let roomCode, isHost=false, pdfUrl;
@@ -434,6 +444,28 @@ if (modal) {
   window.closeSettings = () => modal.classList.add("hidden");
 }
 
+
+function applyZoom() {
+  document.querySelectorAll(".page").forEach(page => {
+    page.style.transformOrigin = "top center";
+    page.style.transform = `scale(${zoom})`;
+  });
+}
+
+  zoomInBtn.onclick = () => {
+  zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
+  applyZoom();
+};
+
+zoomOutBtn.onclick = () => {
+  zoom = Math.max(ZOOM_MIN, zoom - ZOOM_STEP);
+  applyZoom();
+};
+
+zoomResetBtn.onclick = () => {
+  zoom = 1;
+  applyZoom();
+};
 
 
   
@@ -602,8 +634,9 @@ function enableDrawing(c, page) {
   c.onmousedown = e => {
     d = true;
     const b = c.getBoundingClientRect();
-    lx = e.clientX - b.left;
-    ly = e.clientY - b.top;
+    lx = (e.clientX - b.left) / zoom;
+ly = (e.clientY - b.top) / zoom;
+
 
     // ✅ THIS is your pasted code — correct
     push(r, {
@@ -626,8 +659,9 @@ function enableDrawing(c, page) {
     if (!d) return;
 
     const b = c.getBoundingClientRect();
-    const x = e.clientX - b.left;
-    const y = e.clientY - b.top;
+    const x = (e.clientX - b.left) / zoom;
+const y = (e.clientY - b.top) / zoom;
+
 
     push(r, {
       page,
