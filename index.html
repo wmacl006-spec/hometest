@@ -334,9 +334,6 @@ input#joinInput:focus {
   <header>
     <div>Room <strong id="roomLabel"></strong></div>
     <div>
-      <button onclick="zoomOut()">➖</button>
-<button onclick="zoomIn()">➕</button>
-
       <div id="uploadControls">
         <label style="cursor:pointer">Upload
           <input type="file" id="pdfUpload" hidden />
@@ -437,23 +434,7 @@ if (modal) {
   window.closeSettings = () => modal.classList.add("hidden");
 }
 
-let pdfScale = 1.4;
-const MIN_ZOOM = 0.6;
-const MAX_ZOOM = 3;
 
-window.zoomIn = async () => {
-  if (!pdfUrl) return;
-  pdfScale = Math.min(MAX_ZOOM, pdfScale + 0.2);
-  await renderPDF(pdfUrl);
-  redrawAllStrokes();
-};
-
-window.zoomOut = async () => {
-  if (!pdfUrl) return;
-  pdfScale = Math.max(MIN_ZOOM, pdfScale - 0.2);
-  await renderPDF(pdfUrl);
-  redrawAllStrokes();
-};
 
   
 /* ---------- TOOLBAR ---------- */
@@ -569,15 +550,6 @@ async function start(){
 
 }
 
-  function redrawAllStrokes() {
-  const drawRef = ref(db, `rooms/${roomCode}/draw`);
-  get(drawRef).then(snap => {
-    if (snap.exists()) {
-      snap.forEach(s => drawStroke(s.val()));
-    }
-  });
-}
-
 
 /* ---------- DRAWING ---------- */
 function drawStroke(s){
@@ -586,12 +558,7 @@ function drawStroke(s){
   const ctx=c.getContext("2d");
   ctx.save();
   ctx.lineCap="round";
-
-const w = c.width;
-const h = c.height;
-
-ctx.lineWidth = s.size * w;
-  
+  ctx.lineWidth=s.size;
   if(s.erase){
     ctx.globalCompositeOperation="destination-out";
     ctx.strokeStyle="rgba(0,0,0,1)";
@@ -600,10 +567,8 @@ ctx.lineWidth = s.size * w;
     ctx.strokeStyle=s.color;
   }
   ctx.beginPath();
-
-ctx.moveTo(s.x1 * w, s.y1 * h);
-ctx.lineTo(s.x2 * w, s.y2 * h);
-  
+  ctx.moveTo(s.x1,s.y1);
+  ctx.lineTo(s.x2,s.y2);
   ctx.stroke();
   ctx.restore();
 }
@@ -613,10 +578,7 @@ async function renderPDF(url){
   const pdf=await pdfjsLib.getDocument(url).promise;
   for(let i=1;i<=pdf.numPages;i++){
     const p=await pdf.getPage(i);
-
-const v = p.getViewport({ scale: pdfScale });
-
-    
+    const v=p.getViewport({scale:1.4});
     const w=document.createElement("div");
     w.className="page";
     const pc=document.createElement("canvas");
@@ -645,22 +607,15 @@ function enableDrawing(c, page) {
 
     // ✅ THIS is your pasted code — correct
     push(r, {
-  page,
-
-  // normalized (0–1)
-  x1: lx / c.width,
-y1: ly / c.height,
-x2: x / c.width,
-y2: y / c.height,
-
-
-  color: profiles[activeProfile],
-  erase: tool === "eraser",
-
-  // also normalize size
-  size: brushSize / c.width
-});
-
+      page,
+      x1: lx,
+      y1: ly,
+      x2: lx,
+      y2: ly,
+      color: profiles[activeProfile],
+      erase: tool === "eraser",
+      size: brushSize
+    });
   };
 
   c.onmouseup = c.onmouseleave = () => {
