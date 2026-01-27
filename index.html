@@ -649,18 +649,25 @@ ctx.scale(ratio, ratio);
   }
 }
 
-function enableDrawing(c, page) {
-  let d = false, lx, ly;
+function enableDrawing(canvas, page) {
+  let drawing = false;
+  let lx, ly;
   const r = ref(db, `rooms/${roomCode}/draw`);
 
-  c.onmousedown = e => {
-    d = true;
-    const b = c.getBoundingClientRect();
-    lx = ((e.clientX - b.left) / zoom) * ratio;
-ly = ((e.clientY - b.top) / zoom) * ratio;
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
 
+  canvas.onmousedown = e => {
+    drawing = true;
+    const p = getPos(e);
+    lx = p.x;
+    ly = p.y;
 
-    // ✅ THIS is your pasted code — correct
     push(r, {
       page,
       x1: lx,
@@ -673,34 +680,31 @@ ly = ((e.clientY - b.top) / zoom) * ratio;
     });
   };
 
-  c.onmouseup = c.onmouseleave = () => {
-    d = false;
+  canvas.onmouseup = canvas.onmouseleave = () => {
+    drawing = false;
   };
 
-  c.onmousemove = e => {
-    if (!d) return;
+  canvas.onmousemove = e => {
+    if (!drawing) return;
 
-    const b = c.getBoundingClientRect();
-    const x = ((e.clientX - b.left) / zoom) * ratio;
-const y = ((e.clientY - b.top) / zoom) * ratio;
-
-
+    const p = getPos(e);
 
     push(r, {
       page,
       x1: lx,
       y1: ly,
-      x2: x,
-      y2: y,
+      x2: p.x,
+      y2: p.y,
       color: profiles[activeProfile],
       erase: tool === "eraser",
       size: brushSize
     });
 
-    lx = x;
-    ly = y;
+    lx = p.x;
+    ly = p.y;
   };
 }
+
 
 
   /* ---------- KEYBINDS ---------- */
