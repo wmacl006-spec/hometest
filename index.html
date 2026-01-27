@@ -531,22 +531,16 @@ function updateToolbar(){
 document.addEventListener("mousemove", e => {
   if (tool !== "eraser") return;
 
-  const wrapper = document.getElementById("viewerWrapper");
-  const rect = wrapper.getBoundingClientRect();
-
-  // Convert screen mouse position → scaled wrapper space
-  const x = (e.clientX - rect.left) / zoom + rect.left;
-  const y = (e.clientY - rect.top) / zoom + rect.top;
-
-  eraserCursor.style.left = x + "px";
-  eraserCursor.style.top = y + "px";
+  eraserCursor.style.left = e.clientX + "px";
+  eraserCursor.style.top = e.clientY + "px";
 });
 
 
 
 
+
 function updateEraserCursor() {
-  const size = brushSize * ratio * zoom;
+  const size = brushSize * zoom * ratio; // tweak multiplier if desired
 
   eraserCursor.style.width = size + "px";
   eraserCursor.style.height = size + "px";
