@@ -532,11 +532,19 @@ document.addEventListener("mousemove", e => {
 });
 
 function updateEraserCursor() {
-  const size = brushSize * zoom * ratio;
+  // brushSize is canvas pixels
+  // convert to screen (CSS) pixels
+  const canvas = document.querySelector(".draw-layer");
+  if (!canvas) return;
 
-  eraserCursor.style.width = size + "px";
-  eraserCursor.style.height = size + "px";
+  const rect = canvas.getBoundingClientRect();
+
+  const cssSize = brushSize * (rect.width / canvas.width);
+
+  eraserCursor.style.width = cssSize + "px";
+  eraserCursor.style.height = cssSize + "px";
 }
+
 
 updateToolbar();
 
