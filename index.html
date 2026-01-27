@@ -534,12 +534,14 @@ document.addEventListener("mousemove", e => {
   const wrapper = document.getElementById("viewerWrapper");
   const rect = wrapper.getBoundingClientRect();
 
+  // Convert screen mouse position → scaled wrapper space
   const x = (e.clientX - rect.left) / zoom + rect.left;
   const y = (e.clientY - rect.top) / zoom + rect.top;
 
   eraserCursor.style.left = x + "px";
   eraserCursor.style.top = y + "px";
 });
+
 
 
 
