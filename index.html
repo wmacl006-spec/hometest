@@ -456,7 +456,10 @@ if (modal) {
 function applyZoom() {
   const wrapper = document.getElementById("viewerWrapper");
   wrapper.style.transform = `scale(${zoom})`;
+
+  if (tool === "eraser") updateEraserCursor();
 }
+
 
 
 
@@ -527,19 +530,27 @@ function updateToolbar(){
 document.addEventListener("mousemove", e => {
   if (tool !== "eraser") return;
 
-  eraserCursor.style.left = e.clientX + "px";
-  eraserCursor.style.top = e.clientY + "px";
+  const wrapper = document.getElementById("viewerWrapper");
+  const rect = wrapper.getBoundingClientRect();
+
+  // compensate for CSS scale
+  const x = (e.clientX - rect.left) / zoom + rect.left;
+  const y = (e.clientY - rect.top) / zoom + rect.top;
+
+  eraserCursor.style.left = x + "px";
+  eraserCursor.style.top = y + "px";
 });
 
+
 function updateEraserCursor() {
-  // brushSize is canvas pixels
-  // convert to screen (CSS) pixels
   const canvas = document.querySelector(".draw-layer");
   if (!canvas) return;
 
   const rect = canvas.getBoundingClientRect();
 
-  const cssSize = brushSize * (rect.width / canvas.width);
+  // adjust for zoom
+  const cssSize =
+    (brushSize * (rect.width / canvas.width)) * zoom;
 
   eraserCursor.style.width = cssSize + "px";
   eraserCursor.style.height = cssSize + "px";
