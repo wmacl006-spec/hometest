@@ -534,7 +534,6 @@ document.addEventListener("mousemove", e => {
   const wrapper = document.getElementById("viewerWrapper");
   const rect = wrapper.getBoundingClientRect();
 
-  // compensate for CSS scale
   const x = (e.clientX - rect.left) / zoom + rect.left;
   const y = (e.clientY - rect.top) / zoom + rect.top;
 
@@ -543,8 +542,10 @@ document.addEventListener("mousemove", e => {
 });
 
 
+
 function updateEraserCursor() {
-  const size = brushSize * ratio / zoom;
+  const size = brushSize * ratio * zoom;
+
   eraserCursor.style.width = size + "px";
   eraserCursor.style.height = size + "px";
 }
