@@ -463,6 +463,7 @@ function applyZoom() {
 
 
 
+
   zoomInBtn.onclick = () => {
   zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
   applyZoom();
@@ -548,13 +549,14 @@ function updateEraserCursor() {
 
   const rect = canvas.getBoundingClientRect();
 
-  // adjust for zoom
+  // convert canvas pixels → screen pixels
   const cssSize =
-    (brushSize * (rect.width / canvas.width)) * zoom;
+    (brushSize * rect.width / canvas.width) / zoom;
 
   eraserCursor.style.width = cssSize + "px";
   eraserCursor.style.height = cssSize + "px";
 }
+
 
 
 updateToolbar();
