@@ -456,9 +456,9 @@ if (modal) {
 function applyZoom() {
   const wrapper = document.getElementById("viewerWrapper");
   wrapper.style.transform = `scale(${zoom})`;
-
   if (tool === "eraser") updateEraserCursor();
 }
+
 
 
 
@@ -544,17 +544,9 @@ document.addEventListener("mousemove", e => {
 
 
 function updateEraserCursor() {
-  const canvas = document.querySelector(".draw-layer");
-  if (!canvas) return;
-
-  const rect = canvas.getBoundingClientRect();
-
-  // convert canvas pixels → screen pixels
-  const cssSize =
-    (brushSize * rect.width / canvas.width) / zoom;
-
-  eraserCursor.style.width = cssSize + "px";
-  eraserCursor.style.height = cssSize + "px";
+  const size = brushSize * ratio / zoom;
+  eraserCursor.style.width = size + "px";
+  eraserCursor.style.height = size + "px";
 }
 
 
