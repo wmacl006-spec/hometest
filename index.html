@@ -435,7 +435,6 @@ const ZOOM_MIN = 0.9;
 const ZOOM_MAX = 3;
 
 let ratio = window.devicePixelRatio || 3;
-
   
 let roomCode, isHost=false, pdfUrl;
 let tool="pen";
@@ -452,17 +451,11 @@ if (modal) {
   window.closeSettings = () => modal.classList.add("hidden");
 }
 
-
 function applyZoom() {
   const wrapper = document.getElementById("viewerWrapper");
   wrapper.style.transform = `scale(${zoom})`;
   if (tool === "eraser") updateEraserCursor();
 }
-
-
-
-
-
 
   zoomInBtn.onclick = () => {
   zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
@@ -535,18 +528,12 @@ document.addEventListener("mousemove", e => {
   eraserCursor.style.top = e.clientY + "px";
 });
 
-
-
-
-
 function updateEraserCursor() {
-  const size = brushSize * zoom * ratio; // tweak multiplier if desired
+  const size = brushSize * zoom * ratio * 0.9; // tweak multiplier if desired
 
   eraserCursor.style.width = size + "px";
   eraserCursor.style.height = size + "px";
 }
-
-
 
 updateToolbar();
 
